@@ -4,15 +4,24 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+	@apply bg-white dark:bg-gray-950;
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+	@media (prefers-color-scheme: dark) {
+		color-scheme: dark;
+	}
 }
 
 @layer base {
-  :root {
-    --radius: 0.5rem;
-  }
+	:root {
+		--radius: 0.5rem;
+	}
+
+	html {
+		font-family: "Proxima Nova", system-ui, sans-serif;
+		min-height: 100vh;
+	}
+
+	body {
+		min-height: inherit;
+	}
 }

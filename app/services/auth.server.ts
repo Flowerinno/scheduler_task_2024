@@ -1,18 +1,101 @@
 import { Authenticator } from "remix-auth";
 import { sessionStorage } from "~/services/session.server";
 import { FormStrategy } from "remix-auth-form";
+import bcrypt from "bcrypt";
+import {
+	loginSchema,
+	LoginSchema,
+	RegisterSchema,
+	registerSchema,
+} from "~/schema/authSchema";
 
-//TODO decide on a user type (zod/default)
-export let authenticator = new Authenticator<any>(sessionStorage);
+import { parseWithZod } from "@conform-to/zod";
+import prisma from "~/lib/prisma";
+
+type Action = "login" | "register";
+
+export let authenticator = new Authenticator(sessionStorage);
 
 authenticator.use(
 	new FormStrategy(async ({ form }) => {
-		let email = form.get("email");
-		let password = form.get("password");
-		// let user = await login(email, password);
-		let user = {}; // TODO
+		const action = form.get("action") as Action;
+		if (action === "register") {
+			const submission = parseWithZod(form, { schema: registerSchema });
 
-		return user;
+			if (submission.status === "success") {
+				return registerUser(submission.value);
+			}
+		}
+
+		if (action === "login") {
+			const submission = parseWithZod(form, { schema: loginSchema });
+
+			if (submission.status === "success") {
+				return loginUser(submission.value);
+			}
+		}
 	}),
 	"user-pass"
 );
+
+export const registerUser = async (registerData: RegisterSchema) => {
+	try {
+		const existingUser = await prisma?.user.findUnique({
+			omit: {
+				password: true,
+			},
+			where: {
+				email: registerData.email,
+			},
+		});
+
+		if (existingUser) {
+			return existingUser;
+		}
+
+		const salt = await bcrypt.genSalt(10);
+		const hash = await bcrypt.hash(registerData.password, salt);
+
+		const newUser = await prisma?.user.create({
+			data: {
+				email: registerData.email,
+				password: hash,
+				firstName: registerData.firstName,
+				lastName: registerData.lastName,
+			},
+			omit: {
+				password: true,
+			},
+		});
+
+		return newUser;
+	} catch (error) {
+		return;
+	}
+};
+
+export const loginUser = async (loginData: LoginSchema) => {
+	try {
+		const user = await prisma?.user.findUnique({
+			where: {
+				email: loginData.email,
+			},
+		});
+
+		if (!user) {
+			return;
+		}
+
+		const isValid = await bcrypt.compare(loginData.password, user.password);
+
+		if (!isValid) {
+			return;
+		}
+
+		const { password, ...userWithoutPassword } = user;
+
+		return userWithoutPassword;
+	} catch (error) {
+		return;
+	}
+};

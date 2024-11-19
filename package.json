@@ -11,14 +11,18 @@
 		"typecheck": "tsc"
 	},
 	"dependencies": {
+		"@conform-to/react": "^1.2.2",
+		"@conform-to/zod": "^1.2.2",
 		"@prisma/client": "^5.22.0",
 		"@radix-ui/react-collapsible": "^1.1.1",
+		"@radix-ui/react-label": "^2.1.0",
 		"@radix-ui/react-popover": "^1.1.2",
 		"@radix-ui/react-select": "^2.1.2",
 		"@radix-ui/react-slot": "^1.1.0",
 		"@remix-run/node": "^2.14.0",
 		"@remix-run/react": "^2.14.0",
 		"@remix-run/serve": "^2.14.0",
+		"bcrypt": "^5.1.1",
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
 		"date-fns": "^3.6.0",
@@ -35,6 +39,7 @@
 	},
 	"devDependencies": {
 		"@remix-run/dev": "^2.14.0",
+		"@types/bcrypt": "^5.0.2",
 		"@types/react": "^18.2.20",
 		"@types/react-dom": "^18.2.7",
 		"@typescript-eslint/eslint-plugin": "^6.7.4",
