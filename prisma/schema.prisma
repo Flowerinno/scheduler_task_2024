@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum STATUS {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  email             String              @unique
+  firstName         String
+  lastName          String
+  password          String
+  role              Role                @default(USER)
+  clientsOnProjects ClientsOnProjects[]
+  status            STATUS              @default(ACTIVE)
+  Client            Client[]
+}
+
+model Client {
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  email             String              @unique
+  firstName         String
+  lastName          String
+  logs              Log[]
+  role              Role                @default(USER)
+  createdBy         User?               @relation(fields: [createdById], references: [id])
+  createdById       String?
+  clientsOnProjects ClientsOnProjects[]
+  status            STATUS              @default(ACTIVE)
+  clientsOnTags     ClientsOnTags[]
+}
+
+model Project {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  log               Log[]
+  clientsOnProjects ClientsOnProjects[]
+  createdById       String
+  status            STATUS              @default(ACTIVE)
+  Tag               Tag[]
+
+  @@index([createdById])
+}
+
+model Log {
+  id           String   @id @default(cuid())
+  title        String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  startTime    DateTime
+  duration     Float
+  isBillable   Boolean  @default(true)
+  isApproved   Boolean  @default(false)
+  isPaid       Boolean  @default(false)
+  modifiedById String?
+  client       Client   @relation(fields: [clientId], references: [id])
+  clientId     String
+  project      Project  @relation(fields: [projectId], references: [id])
+  projectId    String
+
+  @@index([clientId, projectId, createdAt])
+}
+
+model Tag {
+  id            String          @id @default(cuid())
+  name          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  status        STATUS          @default(ACTIVE)
+  project       Project         @relation(fields: [projectId], references: [id])
+  projectId     String
+  clientsOnTags ClientsOnTags[]
+}
+
+model ClientsOnProjects {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id])
+  Client    Client?  @relation(fields: [clientId], references: [id])
+  clientId  String?
+
+  @@index([userId, projectId])
+}
+
+model ClientsOnTags {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  client    Client   @relation(fields: [clientId], references: [id])
+  clientId  String
+  tag       Tag      @relation(fields: [tagId], references: [id])
+  tagId     String
+
+  @@index([clientId, tagId])
+}
