@@ -11,10 +11,13 @@ import {
 
 import { parseWithZod } from "@conform-to/zod";
 import prisma from "~/lib/prisma";
+import { User } from "@prisma/client";
 
 type Action = "login" | "register";
 
-export let authenticator = new Authenticator(sessionStorage);
+export type AuthUser = Omit<User, "password"> | undefined | null;
+
+export let authenticator = new Authenticator<AuthUser>(sessionStorage);
 
 authenticator.use(
 	new FormStrategy(async ({ form }) => {

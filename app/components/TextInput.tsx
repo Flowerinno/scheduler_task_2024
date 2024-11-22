@@ -8,7 +8,7 @@ type TextInputProps = React.ComponentProps<typeof Input> & {
 
 export const TextInput = (props: TextInputProps) => {
 	return (
-		<div>
+		<div className="w-full">
 			<Input {...props} />
 			<Label className="text-red-300">{props.error}</Label>
 		</div>

@@ -1,10 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
 
-import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { ROUTES } from "~/constants/routes";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	return { message: "hello!" };
+export const loader = async ({}: LoaderFunctionArgs) => {
+	return redirect(ROUTES.projects);
 };
 
 export const meta: MetaFunction = () => {
@@ -15,9 +15,5 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-	// const { message } = useLoaderData<typeof loader>();
-
-	return (
-		<div className="flex h-screen items-center justify-center">here ?</div>
-	);
+	return <div className="flex h-screen items-center justify-center">nope</div>;
 }

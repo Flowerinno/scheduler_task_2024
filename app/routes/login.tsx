@@ -34,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 
 	const user = await authenticator.authenticate("user-pass", request);
-	console.log(user, "user");
+
 	if (!user) {
 		return submission.reply({
 			formErrors: [ERROR_MESSAGES.wrongEmailOrPassword],
@@ -59,7 +59,7 @@ export const meta: MetaFunction = () => {
 
 export default function Login() {
 	const lastResult = useActionData<typeof action>();
-	console.log(lastResult, "lastRes");
+
 	const [form, fields] = useForm({
 		defaultValue: {
 			email: "",
@@ -73,7 +73,7 @@ export default function Login() {
 	});
 
 	return (
-		<div className="flex flex-col items-center justify-center h-[100vh] gap-5">
+		<div className="flex flex-col items-center justify-center gap-5 pt-14">
 			<Label className="text-lg text-black">Welcome to Scheduler</Label>
 			<br />
 			{form.errors && <Label className="text-red-500">{form.errors[0]}</Label>}
@@ -98,7 +98,7 @@ export default function Login() {
 					Sign in
 				</Button>
 			</Form>
-			<Link to={ROUTES.register} className="hover:underline">
+			<Link to={ROUTES.register} className="hover:underline text-black">
 				Create new account
 			</Link>
 		</div>

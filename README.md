@@ -11,4 +11,4 @@
 - [x] Roles: Admin/Manager/Worker
 - [x] Admin panel
 - [x] Manager panel
-- [x] ... To be continued
+- [x] Notifications in the header (invites for example)
