@@ -3,7 +3,6 @@ import { useFetcher, useOutletContext } from "@remix-run/react";
 import { Check, Ban, Delete } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
-import { ROUTES } from "~/constants/routes";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { ContextType } from "~/types";
 import { HTTP_STATUS } from "~/constants/general";
@@ -16,13 +15,10 @@ import {
 type Action = "answer" | "remove";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const isAuthenticated = await authenticateRoute({
+	await authenticateRoute({
 		request,
 	} as ActionFunctionArgs);
 
-	if (!isAuthenticated) {
-		return redirect(ROUTES.login);
-	}
 	const formData = await request.formData();
 
 	const action = formData.get("action") as Action;
@@ -93,7 +89,7 @@ export default function Inbox() {
 						className="rounded-md border-[1px] border-gray-400 p-2 cursor-pointer flex flex-row justify-between items-center"
 					>
 						<Label className="text-black">{notification.message}</Label>
-						{!notification.answer && (
+						{notification.answer === null && (
 							<div className="flex gap-4">
 								<fetcher.Form method="POST">
 									<Button
@@ -141,7 +137,7 @@ export default function Inbox() {
 								</fetcher.Form>
 							</div>
 						)}
-						{notification.answer && (
+						{notification.answer !== null && (
 							<fetcher.Form method="POST">
 								<Button
 									type="submit"

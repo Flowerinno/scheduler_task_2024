@@ -3,7 +3,6 @@ import { parseWithZod } from "@conform-to/zod";
 import { Label } from "~/components/ui/label";
 import { useActionData, Form } from "@remix-run/react";
 import { Link } from "@remix-run/react";
-import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { ROUTES } from "~/constants/routes";
 import { registerSchema } from "~/schema/authSchema";
@@ -18,7 +17,7 @@ import { authenticator } from "~/services/auth.server";
 import { commitSession, getSession } from "~/services/session.server";
 import { ERROR_MESSAGES } from "~/constants/errors";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticator.isAuthenticated(request);
 
 	if (user) redirect(ROUTES.projects);
@@ -26,7 +25,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	return { message: "Register action" };
 };
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.clone().formData();
 
 	const submission = parseWithZod(formData, { schema: registerSchema });
@@ -72,7 +71,7 @@ export default function Register() {
 	return (
 		<div className="flex flex-col items-center justify-center pt-14 gap-5  *:text-black">
 			<Label className="text-lg">Welcome to Scheduler</Label>
-
+			{form.errors && <Label className="text-red-500">{form.errors[0]}</Label>}
 			<br />
 			<Form
 				method="post"

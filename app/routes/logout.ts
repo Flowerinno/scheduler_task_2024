@@ -1,11 +1,6 @@
 import { redirect, ActionFunctionArgs } from "@remix-run/node";
 import { ROUTES } from "~/constants/routes";
-import { authenticator } from "~/services/auth.server";
-import {
-	commitSession,
-	destroySession,
-	getSession,
-} from "~/services/session.server";
+import { destroySession, getSession } from "~/services/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	try {

@@ -11,14 +11,13 @@ import {
 import { Form, useFetcher, useSubmit } from "@remix-run/react";
 import { TextInput } from "../TextInput";
 import { useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { parseWithZod } from "@conform-to/zod";
 import { createProjectSchema } from "~/schema/projectSchema";
 import { SearchField } from "../SearchField";
 import React, { useCallback, useState } from "react";
 import { User } from "@prisma/client";
 import { BadgeItem } from "../BadgeItem";
 import { AuthUser } from "~/services/auth.server";
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 type CreateProjectModalProps = {
 	isModalOpen: boolean;
@@ -67,7 +66,7 @@ export function CreateProjectModal({
 	const onModalSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
 			const formData = new FormData(event.currentTarget);
-			
+
 			const object = {
 				name: formData.get("name"),
 				description: formData.get("description"),
@@ -136,7 +135,7 @@ export function CreateProjectModal({
 							addedUsers.map((user) => {
 								return (
 									<BadgeItem
-										key={user?.id}
+										key={user.id}
 										onClick={() => removeAddedUser(user.id)}
 										title={user.email}
 									/>

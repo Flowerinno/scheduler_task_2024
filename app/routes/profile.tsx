@@ -1,16 +1,19 @@
 import { useLoaderData, useOutletContext } from "@remix-run/react";
 import { ProfileSidebar } from "~/components/profile/ProfileSidebar";
-import { AuthUser } from "~/services/auth.server";
-import { ROUTES } from "~/constants/routes";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { ProfileMain } from "~/components/profile/ProfileMain";
 import { ContextType } from "~/types";
+import { authenticateRoute } from "~/middleware/authenticateRoute";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const url = new URL(request.url);
 	const params = new URLSearchParams(url.search);
 
 	const section = params.get("sidebar");
+
+	await authenticateRoute({
+		request,
+	} as LoaderFunctionArgs);
 
 	return { section };
 };

@@ -10,8 +10,8 @@ import {
 } from "~/schema/authSchema";
 
 import { parseWithZod } from "@conform-to/zod";
-import prisma from "~/lib/prisma";
 import { User } from "@prisma/client";
+import prisma from "~/lib/prisma";
 
 type Action = "login" | "register";
 
@@ -43,7 +43,7 @@ authenticator.use(
 
 export const registerUser = async (registerData: RegisterSchema) => {
 	try {
-		const existingUser = await prisma?.user.findUnique({
+		const existingUser = await prisma.user.findUnique({
 			omit: {
 				password: true,
 			},
@@ -71,8 +71,11 @@ export const registerUser = async (registerData: RegisterSchema) => {
 			},
 		});
 
+		console.log(newUser, "newUser");
+
 		return newUser;
 	} catch (error) {
+		console.log(error, "error");
 		return;
 	}
 };

@@ -9,3 +9,9 @@ export type ContextType = {
 	user: AuthUser;
 	notifications: Notification[] | [];
 };
+
+export enum ROLE {
+	ADMIN = "ADMIN",
+	MANAGER = "MANAGER",
+	USER = "USER",
+}

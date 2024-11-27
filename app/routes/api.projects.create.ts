@@ -4,19 +4,14 @@ import { HTTP_STATUS } from "~/constants/general";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { createProjectSchema } from "~/schema/projectSchema";
 import prisma from "~/lib/prisma";
+import invariant from "tiny-invariant";
+import { ROLE } from "~/types";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	try {
-		const isAuthorized = await authenticateRoute({
+		await authenticateRoute({
 			request,
 		} as ActionFunctionArgs);
-
-		if (!isAuthorized) {
-			return {
-				message: ERROR_MESSAGES.notAuthorized,
-				status: HTTP_STATUS.UNAUTHORIZED,
-			};
-		}
 
 		const contentType = request.headers.get("content-type");
 
@@ -38,15 +33,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			};
 		}
 
+		const user = await prisma.user.findUnique({
+			where: {
+				id: data.createdById,
+			},
+			omit: {
+				password: true,
+			},
+		});
+		invariant(user, "User not found");
+
+		const client = await prisma.client.create({
+			data: {
+				email: user.email,
+				userId: user.id,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				role: ROLE.ADMIN,
+			},
+		});
+		invariant(client, "Client not created");
+
 		const project = await prisma.project.create({
 			data: {
 				name: data.name,
 				description: data.description,
 				createdById: data.createdById,
+				clientsOnProjects: {
+					create: {
+						clientId: client.id,
+					},
+				},
 			},
 		});
-
-		console.log(project, "project");
 
 		if (!project) {
 			return {
@@ -64,18 +83,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		) {
 			for (const client of invitedClients) {
 				try {
-					const isClientOnProject = await prisma.clientsOnProjects.findFirst({
-						where: {
-							client: {
-								userId: client.id,
-							},
-						},
-					});
-
-					if (isClientOnProject) {
-						continue;
-					}
-
 					await prisma?.notification.create({
 						data: {
 							message: `You have been invited to ${data.name} project`,

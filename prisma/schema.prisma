@@ -33,11 +33,13 @@ model User {
   firstName        String
   lastName         String
   password         String
-  role             Role           @default(USER)
   status           STATUS         @default(ACTIVE)
   notification     Notification[] @relation("ReceivedByNotifications")
   sentNotification Notification[] @relation("SentByNotification")
-  client           Client[]
+  project          Project[]
+  log              Log[]
+  client           Client[]       @relation("ClientToUser")
+  createdClients   Client[]       @relation("ClientCreatedByUser")
 }
 
 model Client {
@@ -49,11 +51,12 @@ model Client {
   lastName          String
   logs              Log[]
   role              Role                @default(USER)
+  createdBy         User?               @relation("ClientCreatedByUser", fields: [createdById], references: [id])
   createdById       String?
   clientsOnProjects ClientsOnProjects[]
   status            STATUS              @default(ACTIVE)
   clientsOnTags     ClientsOnTags[]
-  user              User                @relation(fields: [userId], references: [id])
+  user              User                @relation("ClientToUser", fields: [userId], references: [id], onDelete: Cascade)
   userId            String
 }
 
@@ -66,6 +69,7 @@ model Project {
   log               Log[]
   clientsOnProjects ClientsOnProjects[]
   createdById       String
+  createdBy         User                @relation(fields: [createdById], references: [id])
   status            STATUS              @default(ACTIVE)
   tag               Tag[]
 
@@ -76,14 +80,15 @@ model Log {
   id           String    @id @default(cuid())
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  title        String
-  content      String
+  title        String    @default("Untitled")
+  content      String    @default("-")
   startTime    DateTime  @default(now())
   endTime      DateTime?
   duration     Float?
   isBillable   Boolean   @default(true)
   isApproved   Boolean   @default(false)
   isAbsent     Boolean   @default(false)
+  modifiedBy   User?     @relation(fields: [modifiedById], references: [id])
   modifiedById String?
   client       Client    @relation(fields: [clientId], references: [id])
   clientId     String
@@ -99,9 +104,9 @@ model Notification {
   updatedAt DateTime  @updatedAt
   checkedAt DateTime?
   message   String
-  user      User      @relation("ReceivedByNotifications", fields: [userId], references: [id])
+  user      User      @relation("ReceivedByNotifications", fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  sentBy    User      @relation("SentByNotification", fields: [sentById], references: [id])
+  sentBy    User      @relation("SentByNotification", fields: [sentById], references: [id], onDelete: Cascade)
   sentById  String
   answer    Boolean?
   projectId String?
@@ -116,6 +121,8 @@ model Tag {
   project       Project         @relation(fields: [projectId], references: [id])
   projectId     String
   clientsOnTags ClientsOnTags[]
+
+  @@index([projectId])
 }
 
 model ClientsOnProjects {
@@ -123,8 +130,8 @@ model ClientsOnProjects {
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String
-  client    Client   @relation(fields: [clientId], references: [id])
-  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String   @unique
 
   @@index([projectId, clientId])
 }
@@ -132,7 +139,7 @@ model ClientsOnProjects {
 model ClientsOnTags {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  client    Client   @relation(fields: [clientId], references: [id])
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId  String
   tag       Tag      @relation(fields: [tagId], references: [id])
   tagId     String
