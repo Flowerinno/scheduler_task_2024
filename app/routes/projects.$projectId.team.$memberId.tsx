@@ -1,8 +1,14 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import {
+	Link,
+	useFetcher,
+	useLoaderData,
+	useLocation,
+	useNavigate,
+} from "@remix-run/react";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { DateRange } from "react-day-picker";
+import { DateRange, DayContentProps, FooterProps } from "react-day-picker";
 import invariant from "tiny-invariant";
 import { CalendarComponent } from "~/components/Calendar";
 import {
@@ -20,6 +26,11 @@ import { getClientInfoById } from "~/services/client.server";
 import { AddActivityPopup } from "~/components/AddActivityPopup";
 
 import { ROLE } from "~/types";
+import { Button } from "~/components/ui/button";
+import { Alert } from "~/components/Alert";
+import { Log } from "@prisma/client";
+import { cn } from "~/lib/utils";
+import { Separator } from "~/components/ui/separator";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId; // client id
@@ -41,6 +52,7 @@ export default function TeamMember() {
 	const { clientInfo, user } = useLoaderData<typeof loader>();
 
 	const [date, setDate] = useState<Date | DateRange>();
+	const [isAlertOpen, setIsAlertOpen] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const pathName = useLocation().pathname;
@@ -56,6 +68,40 @@ export default function TeamMember() {
 	const voidSelection = (date: Date | DateRange) => {};
 
 	const isAdmin = project.createdById === user.id;
+
+	const fetcher = useFetcher();
+
+	const navigate = useNavigate();
+
+	const removeClient = (clientId: string) => {
+		const formData = new FormData();
+		formData.append("action", "deleteClient");
+		formData.append("clientId", clientId);
+		formData.append("userId", user.id);
+		formData.append("projectId", project.id);
+
+		fetcher.submit(formData, {
+			method: "POST",
+			action: "/api/projects/clients",
+		});
+
+		setIsAlertOpen(false);
+		navigate(backRoute);
+	};
+
+	const customComponents = {
+		DayContent: (props: DayContentProps) => (
+			<DayContent
+				{...props}
+				logs={clientInfo.clientsOnProjects[0].project.log}
+			/>
+		),
+		Footer,
+	};
+
+	const loggedMonthHours = 0; //TODO hh/mm format
+
+	const loggedTotalHours = 0; //TODO hh/mm format
 
 	return (
 		<div className="p-10 relative flex flex-col gap-12 w-full">
@@ -75,6 +121,13 @@ export default function TeamMember() {
 					selectedDate={date as Date}
 				/>
 			)}
+			<Alert
+				onAlertOpenChange={setIsAlertOpen}
+				isAlertOpen={isAlertOpen}
+				title={`Remove ${clientInfo.firstName} from the project`}
+				description="Are you sure you want to remove this member from the project? You can invite them back at any time."
+				onAccept={() => removeClient(clientInfo.id)}
+			/>
 			<Link to={backRoute}>
 				<ArrowLeft className="absolute top-4 left-4 cursor-pointer text-black" />
 			</Link>
@@ -82,6 +135,7 @@ export default function TeamMember() {
 				<Label className="text-2xl">
 					{clientInfo.firstName} {clientInfo.lastName} -{" "}
 				</Label>
+				Í
 				<Label className="font-bold text-2xl text-gray-400">
 					{clientInfo.clientsOnProjects[0].project.name}
 				</Label>
@@ -93,12 +147,44 @@ export default function TeamMember() {
 						projectId={project.id}
 					/>
 				)}
+				<Button
+					className="text-red-500 h-6 text-xs"
+					variant={"outline"}
+					onClick={() => setIsAlertOpen(true)}
+				>
+					Remove from project
+				</Button>
+			</div>
+
+			<div className="flex flex-col gap-2">
+				<Label className="text-2xl">{clientInfo.firstName}'s summary</Label>
+				<Separator />
+				<div className="flex justify-center gap-12">
+					<div className="flex flex-col">
+						<Label className="text-xl font-[400]">Logged Last Month</Label>
+						<br />
+						<span className="text-black text-4xl self-center">
+							{loggedMonthHours} / h
+						</span>
+					</div>
+					<Separator orientation="vertical" className="min-h-24" />
+					<div className="flex flex-col">
+						<Label className="text-xl font-[400">Logged Total</Label>
+						<br />
+						<span className="text-black text-4xl self-center">
+							{loggedTotalHours} / h
+						</span>
+					</div>
+				</div>
+				<Separator />
 			</div>
 
 			<CalendarComponent
 				mode="single"
 				selected={date}
 				onSelect={isAdmin ? onSelect : voidSelection}
+				activities={clientInfo.clientsOnProjects[0].project.log}
+				customComponents={customComponents}
 			/>
 		</div>
 	);
@@ -154,3 +240,32 @@ const RoleSelector = ({
 		</fetcher.Form>
 	);
 };
+
+const DayContent = ({ logs, ...props }: DayContentProps & { logs: Log[] }) => {
+	const logsForDay = logs.find(
+		(entry) => new Date(entry.startTime).getDate() === props.date.getDate()
+	);
+
+	const overview = logsForDay ? "Title here needed" : "No Activities";
+
+	const isAbsent = logsForDay?.isAbsent;
+
+	return (
+		<div className="flex flex-col items-start justify-start p-1">
+			<div className="text-sm font-normal">{props.date.getDate()}</div>
+			<Label className={cn([logsForDay ? "" : "text-gray-400"])}>
+				{overview}
+			</Label>
+			<Label className={cn([logsForDay ? "" : "text-gray-400"])}>
+				{logsForDay?.title ? logsForDay.title : ""}
+			</Label>
+			<Label className={cn([isAbsent ? "text-red-400" : ""])}>
+				{isAbsent ? "Absent" : ""}
+			</Label>
+		</div>
+	);
+};
+
+const Footer = ({ ...props }: FooterProps) => (
+	<Label className="text-xs">Select a date to add an activity</Label>
+);

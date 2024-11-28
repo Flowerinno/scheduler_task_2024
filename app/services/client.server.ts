@@ -110,3 +110,52 @@ export const updateRole = async (clientId: string, role: ROLE) => {
 		return;
 	}
 };
+
+export const inviteUserToProject = async (
+	name: string,
+	deliverToUserID: string,
+	sentById: string,
+	projectId: string
+) => {
+	try {
+		const existingUser = await prisma.project.findFirst({
+			where: {
+				id: projectId,
+				clientsOnProjects: {
+					some: {
+						client: {
+							userId: deliverToUserID,
+						},
+					},
+				},
+			},
+		});
+
+		if (existingUser) return;
+
+		return await prisma.notification.create({
+			data: {
+				message: `You have been invited to ${name} project`,
+				userId: deliverToUserID,
+				sentById,
+				projectId,
+			},
+		});
+	} catch (error) {
+		console.log(`Failed to invite user to project: ${error}`);
+	}
+};
+
+export const removeClientFromProject = async (clientId: string) => {
+	try {
+		const client = await prisma.client.delete({
+			where: {
+				id: clientId,
+			},
+		});
+
+		return client;
+	} catch (error) {
+		return;
+	}
+};

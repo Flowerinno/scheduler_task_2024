@@ -1,4 +1,5 @@
-import { DateRange } from "react-day-picker";
+import { Log } from "@prisma/client";
+import { CustomComponents, DateRange } from "react-day-picker";
 import { Calendar, CalendarProps } from "~/components/ui/calendar";
 import { cn } from "~/lib/utils";
 
@@ -7,6 +8,8 @@ type CalendarComponentProps = {
 	selected: Date | DateRange | undefined;
 	onSelect: (date: Date | DateRange) => void;
 	className?: string;
+	activities: Log[];
+	customComponents?: CustomComponents
 };
 
 export function CalendarComponent({
@@ -14,6 +17,8 @@ export function CalendarComponent({
 	selected,
 	onSelect,
 	className,
+	activities,
+	customComponents,
 }: CalendarComponentProps) {
 	return (
 		<Calendar
@@ -22,6 +27,8 @@ export function CalendarComponent({
 			//@ts-expect-error
 			onSelect={onSelect}
 			className={cn("w-full text-white", className)}
+			activities={activities}
+			customComponents={customComponents}
 		/>
 	);
 }

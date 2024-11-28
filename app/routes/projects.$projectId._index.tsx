@@ -9,6 +9,16 @@ import { formatDate } from "date-fns";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { SearchField } from "~/components/SearchField";
+import { AddClientsPopup } from "~/components/AddClientsPopup";
+import { useState } from "react";
+import { ROLE } from "~/types";
+
+const ROLE_COLOR_MAPPER = {
+	ADMIN: "text-red-500",
+	MANAGER: "text-yellow-500",
+	USER: "text-green-500",
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
@@ -29,11 +39,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			throw redirect(ROUTES.projects);
 		}
 
-		const testComponent = (
-			<div className="text-black">this is for admins only!</div>
-		);
-
-		return { project, client: foundClient?.client, testComponent, user };
+		return { project, client: foundClient?.client, user };
 	} catch (error) {
 		return redirect(ROUTES.projects);
 	}
@@ -41,8 +47,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 //TODO calculate logged hours on client side
 export default function Project() {
-	const { project, client, testComponent, user } =
-		useLoaderData<typeof loader>();
+	const { project, client, user } = useLoaderData<typeof loader>();
+
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const pathName = useLocation().pathname;
 
@@ -54,23 +61,45 @@ export default function Project() {
 
 	return (
 		<div className="w-full p-10 flex flex-col gap-12 relative">
+			{isModalOpen && (
+				<AddClientsPopup
+					isModalOpen={isModalOpen}
+					onModalOpenChange={setIsModalOpen}
+					userData={user}
+					projectId={project.id}
+					projectName={project.name}
+				/>
+			)}
 			<Link to={ROUTES.projects}>
 				<ArrowLeft className="absolute top-4 left-4 cursor-pointer text-black" />
 			</Link>
 			<div>
-				<div className="flex gap-1 items-center justify-between">
+				<div className="flex gap-1 items-center justify-between pb-5">
 					<div>
 						<Label className="text-2xl">{project.name} | </Label>
-						<Label className="font-bold text-2xl text-gray-400">
+						<Label
+							className={`font-bold text-2xl ${ROLE_COLOR_MAPPER[client.role]}`}
+						>
 							{client.role}
 						</Label>
 					</div>
 
-					<Button asChild variant={"default"}>
-						<Link className="text-white" to={activityLink}>
-							View activities
-						</Link>
-					</Button>
+					<div className="flex gap-3">
+						<Button asChild variant={"default"}>
+							<Link className="text-white" to={activityLink}>
+								View activities
+							</Link>
+						</Button>
+						{client.role === ROLE.ADMIN && (
+							<Button
+								className="text-white"
+								variant={"default"}
+								onClick={() => setIsModalOpen(true)}
+							>
+								Invite members
+							</Button>
+						)}
+					</div>
 				</div>
 
 				<div className="flex flex-col gap-2">
@@ -113,8 +142,6 @@ export default function Project() {
 				<Separator />
 			</div>
 
-			{testComponent}
-
 			<div className="flex flex-col gap-2">
 				<Label className="text-2xl">Team members: </Label>
 				<Separator />
@@ -127,7 +154,9 @@ export default function Project() {
 						<Link key={c.client.userId} to={to}>
 							<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150">
 								{c.client.firstName} {c.client.lastName} | {c.client.email} |{" "}
-								{c.client.role}
+								<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
+									{c.client.role}
+								</span>
 							</Label>
 						</Link>
 					);

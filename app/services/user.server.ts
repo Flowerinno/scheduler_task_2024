@@ -37,7 +37,7 @@ export const getUserNotifications = async (
 	}
 };
 
-export const answerCreateProjectNotification = async (
+export const answerProjectInvitation = async (
 	notificationId: string,
 	projectId: string,
 	answer: boolean

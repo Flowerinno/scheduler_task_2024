@@ -8,7 +8,7 @@ import { ContextType } from "~/types";
 import { HTTP_STATUS } from "~/constants/general";
 import { ERROR_MESSAGES } from "~/constants/errors";
 import {
-	answerCreateProjectNotification,
+	answerProjectInvitation,
 	removeNotification,
 } from "~/services/user.server";
 
@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			};
 
 		try {
-			await answerCreateProjectNotification(
+			await answerProjectInvitation(
 				notificationId as string,
 				projectId as string,
 				answer === "true"

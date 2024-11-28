@@ -13,7 +13,7 @@ import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import styles from "./tailwind.css?url";
 import { Header } from "./components/sections/Header";
-import { authenticator, AuthUser } from "./services/auth.server";
+import { authenticator } from "./services/auth.server";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/appSidebar/AppSidebar";
 import { checkSidebarVisibility } from "./utils/route/checkSidebarVisibility";
