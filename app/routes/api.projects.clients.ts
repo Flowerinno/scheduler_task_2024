@@ -56,8 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			const projectId = formData.get("projectId") as string;
 			invariant(projectId, "Project ID is required");
 
-			const sentByClient = await authenticateAdmin(userId, projectId);
-			invariant(sentByClient, "User is not authorized to perform this action");
+			await authenticateAdmin(userId, projectId);
 
 			if (action === "updateRole") {
 				return await updateRole(clientId, formData.get("role") as ROLE);

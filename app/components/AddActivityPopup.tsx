@@ -9,19 +9,18 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog";
-import { Form, useFetcher, useSubmit } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import { TextInput } from "./TextInput";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import {
-	createActivitySchema,
-	CreateActivitySchema,
-} from "~/schema/projectSchema";
-import React, { useCallback } from "react";
-
+import React, { useCallback, useState } from "react";
 import { formatDate, toDate } from "date-fns";
 import { Label } from "./ui/label";
 import { ROLE } from "~/types";
+import { StateTimeType, TimePicker } from "./TimePicker";
+import { useToast } from "~/hooks/use-toast";
+import { logsSchema } from "~/schema/logsSchema";
+import { Log } from "@prisma/client";
 
 type AddActivityPopup = {
 	isModalOpen: boolean;
@@ -35,7 +34,13 @@ type AddActivityPopup = {
 		email: string;
 		role: ROLE;
 	};
-	selectedDate: Date | undefined;
+	selectedDate: Date;
+	foundLog: Log | undefined;
+};
+
+type Time = {
+	startTime: Date;
+	endTime: Date;
 };
 
 export function AddActivityPopup({
@@ -45,53 +50,97 @@ export function AddActivityPopup({
 	client,
 	createdById,
 	selectedDate,
+	foundLog,
 }: AddActivityPopup) {
 	const fetcher = useFetcher();
-	const submit = useSubmit();
+
+	const { toast } = useToast();
+
+	const [timeState, setTimeState] = useState<Time>({
+		startTime: selectedDate,
+		endTime: selectedDate,
+	});
 
 	const formattedSelectedDate = formatDate(
 		selectedDate ? toDate(selectedDate) : toDate(new Date()),
 		"yyyy-MM-dd"
 	);
 
-	const [form, fields] = useForm<CreateActivitySchema>({
+	const [form, fields] = useForm({
 		defaultValue: {
 			title: "",
 			content: "",
 			isAbsent: false,
-			isBillable: true,
-			startTime: formattedSelectedDate,
-			endTime: formattedSelectedDate,
-			createdById,
+			isBillable: false,
+			startTime: new Date(selectedDate),
+			endTime: new Date(selectedDate),
+			modifiedById: createdById,
 			projectId,
 			clientId: client.id,
 		},
 		shouldValidate: "onSubmit",
 		onValidate: ({ formData }) => {
-			return parseWithZod(formData, { schema: createActivitySchema });
+			return parseWithZod(formData, { schema: logsSchema });
+		},
+		onSubmit: async (event) => {
+			onModalSubmit(event);
 		},
 	});
 
+	const startTime = timeState.startTime;
+	const endTime = timeState.endTime;
+
 	const onModalSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
+			event.preventDefault();
+
+			if (!startTime || !endTime) return;
+
 			const formData = new FormData(event.currentTarget);
 
-			const object = {
-				name: formData.get("name"),
-				description: formData.get("description"),
-			};
+			formData.append("startTime", startTime.toISOString());
+			formData.append("endTime", endTime.toISOString());
+			formData.append("projectId", projectId);
+			formData.append("clientId", client.id);
+			formData.append("modifiedById", createdById);
 
-			submit(JSON.stringify(object), {
+			if (foundLog) {
+				formData.append("logId", foundLog.id);
+			}
+
+			const submission = parseWithZod(formData, { schema: logsSchema });
+
+			if (submission.status !== "success") {
+				toast({
+					title: "Please fill in the required fields",
+				});
+				return;
+			}
+
+			fetcher.submit(formData, {
 				method: "POST",
-				action: "/api/",
-				encType: "application/json",
-				navigate: false,
+				action: "/api/projects/logs",
 			});
 
 			onModalOpenChange(false);
 		},
-		[fetcher, onModalOpenChange]
+		[timeState.endTime, timeState.startTime, onModalOpenChange]
 	);
+
+	const handleTimeChange = (type: StateTimeType, time: Date) => {
+		if (type === "endTime" && time < startTime) {
+			toast({
+				title: "End time cannot be less than start time",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setTimeState((prev) => ({
+			...prev,
+			[type]: time,
+		}));
+	};
 
 	if (!isModalOpen) return null;
 
@@ -104,22 +153,20 @@ export function AddActivityPopup({
 						Note, this activity will be added to the client's calendar
 					</DialogDescription>
 				</DialogHeader>
-				<Form
+				<form
 					id={form.id}
 					className="flex flex-col gap-4"
-					navigate={false}
 					onSubmit={onModalSubmit}
 				>
 					<TextInput
 						name={fields.title.name}
-						placeholder="Activity title"
+						placeholder="Activity title (optional)"
 						error={fields.title.errors}
-						required
 					/>
 
 					<TextInput
 						name={fields.content.name}
-						placeholder="Activity desciption"
+						placeholder="Activity desciption (optional)"
 						error={fields.content.errors}
 					/>
 
@@ -141,6 +188,21 @@ export function AddActivityPopup({
 						</Label>
 					</div>
 
+					<div className="flex  gap-2">
+						<TimePicker
+							title="Start time"
+							date={startTime}
+							onDateChange={handleTimeChange}
+							type="startTime"
+						/>
+						<TimePicker
+							title="End time"
+							date={endTime}
+							onDateChange={handleTimeChange}
+							type="endTime"
+						/>
+					</div>
+
 					<input name="createdById" value={createdById} type="hidden" />
 
 					<DialogFooter className="justify-end">
@@ -154,7 +216,7 @@ export function AddActivityPopup({
 							</Button>
 						</DialogClose>
 					</DialogFooter>
-				</Form>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

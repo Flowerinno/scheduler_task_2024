@@ -5,11 +5,11 @@ import { cn } from "~/lib/utils";
 
 type CalendarComponentProps = {
 	mode: CalendarProps["mode"];
-	selected: Date | DateRange | undefined;
-	onSelect: (date: Date | DateRange) => void;
+	selected: Date | undefined;
+	onSelect: (date: Date) => void;
 	className?: string;
 	activities: Log[];
-	customComponents?: CustomComponents
+	customComponents?: CustomComponents;
 };
 
 export function CalendarComponent({

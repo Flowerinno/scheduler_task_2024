@@ -85,7 +85,7 @@ model Log {
   startTime    DateTime  @default(now())
   endTime      DateTime?
   duration     Float?
-  isBillable   Boolean   @default(true)
+  isBillable   Boolean   @default(false)
   isApproved   Boolean   @default(false)
   isAbsent     Boolean   @default(false)
   modifiedBy   User?     @relation(fields: [modifiedById], references: [id])
@@ -126,12 +126,13 @@ model Tag {
 }
 
 model ClientsOnProjects {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id])
-  projectId String
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId  String   @unique
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId        String   @unique
+  totalLoggedTime Float    @default(0)
 
   @@index([projectId, clientId])
 }

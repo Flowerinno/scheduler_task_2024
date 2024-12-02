@@ -11,6 +11,7 @@ import {
 	answerProjectInvitation,
 	removeNotification,
 } from "~/services/user.server";
+import { formatDate } from "date-fns";
 
 type Action = "answer" | "remove";
 
@@ -88,7 +89,11 @@ export default function Inbox() {
 						key={notification.id}
 						className="rounded-md border-[1px] border-gray-400 p-2 cursor-pointer flex flex-row justify-between items-center"
 					>
-						<Label className="text-black">{notification.message}</Label>
+						<Label className="text-black">
+							{notification.message} {"| "}
+							{formatDate(notification.createdAt, "dd/MM/yyyy")} -{" "}
+							{formatDate(notification.createdAt, "HH:mm")}
+						</Label>
 						{notification.answer === null && (
 							<div className="flex gap-4">
 								<fetcher.Form method="POST">

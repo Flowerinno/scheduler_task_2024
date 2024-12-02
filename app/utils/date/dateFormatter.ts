@@ -1,9 +1,18 @@
 import { Log } from "@prisma/client";
 
-export const calculateMonthLogs = (logs: Log[], month: number) => {
-	const filteredByMonth = logs.filter(
-		(log) => new Date(log.createdAt).getMonth() === month
-	);
+export const calculateMonthLogs = (logs: Log[], date: Date) => {
+	const now = new Date(date);
+	const currentMonth = now.getMonth();
+	const currentYear = now.getFullYear();
+
+	const filteredByMonth = logs.filter((log) => {
+		const logDate = new Date(log.startTime);
+
+		return (
+			logDate.getMonth() === currentMonth &&
+			logDate.getFullYear() === currentYear
+		);
+	});
 
 	const total = accumulateHours(filteredByMonth);
 
@@ -28,4 +37,17 @@ export const accumulateHours = (logs: Log[]) => {
 	}, 0);
 
 	return total;
+};
+
+export const calculateDuration = (duration: number | undefined | null) => {
+	if (!duration) return "";
+
+	const hours = Math.floor(duration / (1000 * 60 * 60));
+	const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+
+	const formattedDuration = `${String(hours).padStart(2, "0")}:${String(
+		minutes
+	).padStart(2, "0")}`;
+
+	return formattedDuration;
 };

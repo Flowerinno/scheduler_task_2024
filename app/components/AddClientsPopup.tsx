@@ -11,7 +11,7 @@ import {
 import { Form, useFetcher, useSubmit } from "@remix-run/react";
 
 import { SearchField } from "./SearchField";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { User } from "@prisma/client";
 import { BadgeItem } from "./BadgeItem";
 import { AuthUser } from "~/services/auth.server";

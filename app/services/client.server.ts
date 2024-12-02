@@ -1,13 +1,25 @@
 import prisma from "~/lib/prisma";
 import { ROLE } from "~/types";
 
-export const getClientInfoById = async (
+export const getClientForMonth = async (
 	clientId: string,
 	projectId: string,
-	take: number = 20
+	take: number = 31,
+	date: Date
 ) => {
+	const gte = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+	const lte = new Date(
+		date.getFullYear(),
+		date.getMonth() + 1,
+		0,
+		23,
+		59,
+		59,
+		999
+	);
+
 	try {
-		const client = await prisma.client.findUnique({
+		const clientInfo = await prisma.client.findUnique({
 			where: {
 				id: clientId,
 			},
@@ -49,21 +61,32 @@ export const getClientInfoById = async (
 								log: {
 									where: {
 										clientId,
-										projectId,
+										startTime: {
+											gte: gte.toISOString(),
+											lte: lte.toISOString(),
+										},
 									},
 									take,
 								},
 							},
 						},
-						// client: {
-						// 	select: {},
-						// },
 					},
 				},
 			},
 		});
 
-		return client;
+		const totalDuration = await prisma.log.aggregate({
+			_sum: {
+				duration: true,
+			},
+			where: {
+				clientId,
+				projectId,
+				isAbsent: false,
+			},
+		});
+
+		return { clientInfo, totalDuration };
 	} catch (error) {
 		return null;
 	}
@@ -80,6 +103,16 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 					where: {
 						client: {
 							userId,
+						},
+					},
+					include: {
+						project: {
+							select: {
+								log: {
+									where: {},
+									take: 31,
+								},
+							},
 						},
 					},
 				},

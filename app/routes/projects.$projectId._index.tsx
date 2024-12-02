@@ -1,23 +1,55 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	redirect,
+} from "@remix-run/node";
 import invariant from "tiny-invariant";
-import { getClientProjectById } from "~/services/project.server";
+import { getClientProjectById, removeProject } from "~/services/project.server";
 import { ROUTES } from "~/constants/routes";
-import { Link, useLoaderData, useLocation } from "@remix-run/react";
-import { authenticateRoute } from "~/middleware/authenticateRoute";
+import { Link, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import {
+	authenticateAdmin,
+	authenticateRoute,
+} from "~/middleware/authenticateRoute";
 import { Label } from "~/components/ui/label";
 import { formatDate } from "date-fns";
 import { Separator } from "~/components/ui/separator";
 import { Button } from "~/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { SearchField } from "~/components/SearchField";
 import { AddClientsPopup } from "~/components/AddClientsPopup";
 import { useState } from "react";
 import { ROLE } from "~/types";
+import { Alert } from "~/components/Alert";
+import { ERROR_MESSAGES } from "~/constants/errors";
+import { HTTP_STATUS } from "~/constants/general";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
 	MANAGER: "text-yellow-500",
 	USER: "text-green-500",
+};
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+	try {
+		const formData = await request.formData();
+
+		const projectId = formData.get("projectId");
+		invariant(projectId, "Project ID is required");
+		const userId = formData.get("userId");
+		invariant(userId, "User ID is required");
+
+		await authenticateAdmin(userId as string, projectId as string);
+
+		const res = await removeProject(projectId as string, userId as string);
+		invariant(res, "Project not found");
+
+		return redirect(ROUTES.projects);
+	} catch (error) {
+		return {
+			message: ERROR_MESSAGES.generalError,
+			status: HTTP_STATUS.NOT_FOUND,
+		};
+	}
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -50,6 +82,9 @@ export default function Project() {
 	const { project, client, user } = useLoaderData<typeof loader>();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isAlertOpen, setIsAlertOpen] = useState(false);
+
+	const fetcher = useFetcher();
 
 	const pathName = useLocation().pathname;
 
@@ -58,6 +93,17 @@ export default function Project() {
 	const loggedTotalHours = 0; //TODO hh/mm format
 
 	const activityLink = `${ROUTES.myActivities}?projectId=${project.id}`;
+
+	const onProjectRemoval = () => {
+		const formData = new FormData();
+
+		formData.append("projectId", project.id);
+		formData.append("userId", user.id);
+
+		fetcher.submit(formData, {
+			method: "POST",
+		});
+	};
 
 	return (
 		<div className="w-full p-10 flex flex-col gap-12 relative">
@@ -68,6 +114,15 @@ export default function Project() {
 					userData={user}
 					projectId={project.id}
 					projectName={project.name}
+				/>
+			)}
+			{isAlertOpen && (
+				<Alert
+					isAlertOpen={isAlertOpen}
+					onAlertOpenChange={setIsAlertOpen}
+					onAccept={onProjectRemoval}
+					title={`You are about to delete ${project.name} project`}
+					description="Are you sure you want to delete this project?"
 				/>
 			)}
 			<Link to={ROUTES.projects}>
@@ -91,13 +146,23 @@ export default function Project() {
 							</Link>
 						</Button>
 						{client.role === ROLE.ADMIN && (
-							<Button
-								className="text-white"
-								variant={"default"}
-								onClick={() => setIsModalOpen(true)}
-							>
-								Invite members
-							</Button>
+							<>
+								<Button
+									className="text-white"
+									variant={"default"}
+									onClick={() => setIsModalOpen(true)}
+								>
+									Invite members
+								</Button>
+
+								<Button
+									className="text-white"
+									variant={"destructive"}
+									onClick={() => setIsAlertOpen(true)}
+								>
+									Delete project
+								</Button>
+							</>
 						)}
 					</div>
 				</div>

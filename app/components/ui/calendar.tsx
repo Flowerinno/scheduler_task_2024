@@ -4,6 +4,7 @@ import { CustomComponents, DayPicker } from "react-day-picker";
 
 import { cn } from "~/lib/utils";
 import { buttonVariants } from "~/components/ui/button";
+import { useSearchParams } from "@remix-run/react";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
 	customComponents?: CustomComponents;
@@ -16,9 +17,27 @@ function Calendar({
 	customComponents,
 	...props
 }: CalendarProps) {
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const onMonthChange = (date: Date) => {
+		const DATE = new Date(date);
+		const params = new URLSearchParams({
+			date: DATE.toISOString(),
+		});
+		setSearchParams(params, {
+			preventScrollReset: true,
+		});
+	};
+
+	const defaultMonth = searchParams.get("date")
+		? new Date(searchParams.get("date") as string)
+		: new Date();
+
 	return (
 		<DayPicker
+			onMonthChange={onMonthChange}
 			showOutsideDays={showOutsideDays}
+			defaultMonth={defaultMonth}
 			className={cn("p-0 w-full", className)}
 			classNames={{
 				root: "w-full",
@@ -41,14 +60,14 @@ function Calendar({
 				head_cell:
 					"text-neutral-500 rounded-md w-full font-normal text-[0.8rem] dark:text-neutral-400",
 				row: "flex w-full",
-				cell: "h-12 md:h-24 w-full text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-neutral-100/50 [&:has([aria-selected])]:bg-neutral-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected].day-outside)]:bg-neutral-800/50 dark:[&:has([aria-selected])]:bg-neutral-800",
+				cell: "h-12 md:h-24 w-full min-w-[100px] text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-neutral-100/50 [&:has([aria-selected])]:bg-neutral-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected].day-outside)]:bg-neutral-800/50 dark:[&:has([aria-selected])]:bg-neutral-800",
 				day: cn(
 					buttonVariants({ variant: "ghost" }),
 					"h-12 md:h-24 w-full p-0 font-normal aria-selected:opacity-100 flex flex-col items-start justify-start p-2 border-[1px]"
 				),
 				day_range_end: "day-range-end",
 				day_selected:
-					"bg-neutral-900 text-white hover:bg-neutral-900 hover:text-neutral-50 focus:bg-neutral-900 focus:text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-50 dark:hover:text-neutral-900 dark:focus:bg-neutral-50 dark:focus:text-neutral-900",
+					"border-black border-[2px] bg-gray-200 hover:bg-neutral-900 hover:text-neutral-50 focus:bg-neutral-900 focus:text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-50 dark:hover:text-neutral-900 dark:focus:bg-neutral-50 dark:focus:text-neutral-900",
 				day_today:
 					"border-[1px] bg-neutral-100  dark:bg-neutral-800 dark:text-neutral-50",
 				day_outside:

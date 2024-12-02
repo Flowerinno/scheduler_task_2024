@@ -101,8 +101,6 @@ export function CreateProjectModal({
 				</DialogHeader>
 				<Form
 					id={form.id}
-					// method="POST"
-					// action="/api/projects/create"
 					className="flex flex-col gap-4"
 					navigate={false}
 					onSubmit={onModalSubmit}

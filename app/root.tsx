@@ -1,4 +1,5 @@
 import {
+	Link,
 	Links,
 	Meta,
 	Outlet,
@@ -8,6 +9,7 @@ import {
 	useLoaderData,
 	useLocation,
 	useRouteError,
+	useRouteLoaderData,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
@@ -23,34 +25,25 @@ import { CreateProjectModal } from "./components/appSidebar/CreateProjectModal";
 import { getUserNotifications } from "./services/user.server";
 import { Notification } from "@prisma/client";
 import { ContextType } from "./types";
+import { Label } from "./components/ui/label";
+import { Button } from "./components/ui/button";
+import { Toaster } from "~/components/ui/toaster";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 export function ErrorBoundary() {
 	const error = useRouteError();
 
-	if (isRouteErrorResponse(error)) {
-		return (
-			<div>
-				<h1>
-					{error.status} {error.statusText}
-				</h1>
-				<p>{error.data}</p>
-			</div>
-		);
-	} else if (error instanceof Error) {
-		return (
-			<div>
-				<h1>Looks like something went wrong...</h1>
-			</div>
-		);
-	} else {
-		return (
-			<div>
-				<h1>Looks like something went wrong...</h1>
-			</div>
-		);
-	}
+	return (
+		<div className="w-full p-10 flex flex-col gap-2 items-center">
+			<Label className="text-xl">Looks like something went wrong...</Label>
+			<Button asChild className="w-4/12">
+				<Link className="text-white" to={ROUTES.projects}>
+					Click here to navigate!
+				</Link>
+			</Button>
+		</div>
+	);
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -66,7 +59,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-	const data = useLoaderData<typeof loader>();
+	const data = useRouteLoaderData<typeof loader>("root");
+
 	const [isOpen, setIsOpen] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -89,6 +83,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
+				<Toaster />
 				<Header
 					userData={data?.user}
 					isAuthenticated={data?.user?.id ? true : false}
@@ -107,7 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 								userData={data?.user}
 								onOpenChange={setIsOpen}
 								onModalOpenChange={setIsModalOpen}
-								notificationsCount={countOfNotCheckedNotifications}
+								notificationsCount={countOfNotCheckedNotifications ?? 0}
 							/>
 
 							{children}
@@ -125,7 +120,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 	const data = useLoaderData<typeof loader>();
-	console.log(data?.notifications);
+
 	return (
 		<Outlet
 			context={
