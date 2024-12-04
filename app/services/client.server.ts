@@ -114,6 +114,7 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 								},
 							},
 						},
+						client: true,
 					},
 				},
 			},

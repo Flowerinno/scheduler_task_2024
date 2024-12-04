@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import {
 	Link,
 	useFetcher,
@@ -22,11 +22,8 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { Label } from "~/components/ui/label";
-import {
-	authenticateAdmin,
-	authenticateRoute,
-} from "~/middleware/authenticateRoute";
-import { getClientForMonth } from "~/services/client.server";
+import { authenticateRoute } from "~/middleware/authenticateRoute";
+import { getClientByUserId, getClientForMonth } from "~/services/client.server";
 import { AddActivityPopup } from "~/components/AddActivityPopup";
 
 import { ROLE } from "~/types";
@@ -40,6 +37,7 @@ import {
 	calculateDuration,
 	calculateMonthLogs,
 } from "~/utils/date/dateFormatter";
+import { ROUTES } from "~/constants/routes";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId; // client id
@@ -51,8 +49,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
 	invariant(user, "User session is missing");
 
-	const admin = await authenticateAdmin(user.id, projectId);
-	invariant(admin, "Not authorized");
+	const activeClient = await getClientByUserId(user.id, projectId);
+	invariant(activeClient, "Client not found");
+
+	const role = activeClient?.clientsOnProjects[0].client.role;
+
+	if (role !== ROLE.ADMIN && role !== ROLE.MANAGER) {
+		throw redirect(ROUTES.projects);
+	}
 
 	const query = new URL(request.url).searchParams;
 
@@ -68,12 +72,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		clientInfo: data.clientInfo,
 		totalDuration: data.totalDuration?._sum.duration,
 		user,
-		admin,
+		activeClientRole: role,
 	};
 };
 
 export default function TeamMember() {
-	const { clientInfo, totalDuration, admin, user } =
+	const { clientInfo, totalDuration, activeClientRole, user } =
 		useLoaderData<typeof loader>();
 
 	const [date, setDate] = useState<Date>();
@@ -98,7 +102,7 @@ export default function TeamMember() {
 
 	const voidSelection = (date: Date) => {};
 
-	const isAdmin = admin.clientsOnProjects[0].client.role === ROLE.ADMIN;
+	const isAdmin = activeClientRole === ROLE.ADMIN;
 
 	const fetcher = useFetcher();
 
@@ -140,6 +144,8 @@ export default function TeamMember() {
 				new Date(log.startTime).toDateString() === new Date(date).toDateString()
 		);
 	}
+
+	const absentDaysCount = logs.filter((log) => log.isAbsent).length;
 
 	return (
 		<div className="p-10 relative flex flex-col gap-12 w-full">
@@ -204,6 +210,9 @@ export default function TeamMember() {
 						<br />
 						<span className="text-black text-4xl self-center">
 							{loggedMonthHours}:00 / h
+						</span>
+						<span className="text-gray-500 text-xs self-center">
+							{absentDaysCount} day{absentDaysCount > 1 && "s"} absent
 						</span>
 					</div>
 					<Separator orientation="vertical" className="min-h-24" />
@@ -290,11 +299,18 @@ const DayContent = ({ logs, ...props }: DayContentProps & { logs: Log[] }) => {
 
 	const duration = calculateDuration(log?.duration);
 
+	const title = log?.title !== "Untitled" ? log?.title : "";
+
 	return (
 		<div className="flex flex-col items-start justify-start p-1">
 			<div className="text-sm font-normal">{props.date.getDate()}</div>
 			<div className="w-full flex flex-col gap-1 items-start">
 				<Label className={cn([log ? "" : "text-gray-400"])}>{overview}</Label>
+				{title && (
+					<Label className={cn([log?.title ? "" : "text-gray-400"])}>
+						{title}
+					</Label>
+				)}
 				{duration && (
 					<Label className={cn([log?.duration ? "text-gray-500" : ""])}>
 						Duration: <strong className="text-black">{duration}</strong>

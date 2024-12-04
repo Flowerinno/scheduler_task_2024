@@ -39,8 +39,8 @@ type AddActivityPopup = {
 };
 
 type Time = {
-	startTime: Date;
-	endTime: Date;
+	startTime: Date | undefined;
+	endTime: Date | undefined;
 };
 
 export function AddActivityPopup({
@@ -57,8 +57,8 @@ export function AddActivityPopup({
 	const { toast } = useToast();
 
 	const [timeState, setTimeState] = useState<Time>({
-		startTime: selectedDate,
-		endTime: selectedDate,
+		startTime: undefined,
+		endTime: undefined,
 	});
 
 	const formattedSelectedDate = formatDate(
@@ -70,10 +70,10 @@ export function AddActivityPopup({
 		defaultValue: {
 			title: "",
 			content: "",
-			isAbsent: false,
-			isBillable: false,
-			startTime: new Date(selectedDate),
-			endTime: new Date(selectedDate),
+			isAbsent: "false",
+			isBillable: "false",
+			startTime: undefined,
+			endTime: undefined,
 			modifiedById: createdById,
 			projectId,
 			clientId: client.id,
@@ -87,8 +87,8 @@ export function AddActivityPopup({
 		},
 	});
 
-	const startTime = timeState.startTime;
-	const endTime = timeState.endTime;
+	const startTime = timeState.startTime || selectedDate;
+	const endTime = timeState.endTime || selectedDate;
 
 	const onModalSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
@@ -98,6 +98,14 @@ export function AddActivityPopup({
 
 			const formData = new FormData(event.currentTarget);
 
+			formData.set(
+				"isAbsent",
+				formData.get("isAbsent") === "on" ? "true" : "false"
+			);
+			formData.set(
+				"isBillable",
+				formData.get("isBillable") === "on" ? "true" : "false"
+			);
 			formData.append("startTime", startTime.toISOString());
 			formData.append("endTime", endTime.toISOString());
 			formData.append("projectId", projectId);
@@ -112,7 +120,7 @@ export function AddActivityPopup({
 
 			if (submission.status !== "success") {
 				toast({
-					title: "Please fill in the required fields",
+					title: "Please fill in the required fields.",
 				});
 				return;
 			}
@@ -171,11 +179,7 @@ export function AddActivityPopup({
 					/>
 
 					<div className="flex gap-2 items-center">
-						<Checkbox
-							id={fields.isAbsent.id}
-							name={fields.isAbsent.name}
-							title="Is Billable"
-						/>
+						<Checkbox id={fields.isAbsent.id} name={fields.isAbsent.name} />
 						<Label htmlFor={fields.isAbsent.id} className="cursor-pointer">
 							Mark as Absent?
 						</Label>

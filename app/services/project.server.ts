@@ -86,7 +86,7 @@ export const getClientProjectById = async (
 export const getProjectActivitiesById = async (
 	projectId: string,
 	userId: string,
-	take: number = 20
+	take: number = 31
 ) => {
 	try {
 		return await prisma.log.findMany({
@@ -96,6 +96,27 @@ export const getProjectActivitiesById = async (
 					userId,
 				},
 			},
+			select: {
+				duration: true,
+				createdAt: true,
+				isAbsent: true,
+				isBillable: true,
+				startTime: true,
+				endTime: true,
+				project: {
+					select: {
+						name: true,
+					},
+				},
+				client: {
+					select: {
+						role: true,
+					},
+				},
+			},
+			orderBy: {
+				startTime: "desc",
+			},
 			take,
 		});
 	} catch (error) {
@@ -103,13 +124,34 @@ export const getProjectActivitiesById = async (
 	}
 };
 
-export const getAllActivities = async (userId: string, take: number = 20) => {
+export const getAllActivities = async (userId: string, take: number = 31) => {
 	try {
 		return await prisma.log.findMany({
 			where: {
 				client: {
 					userId,
 				},
+			},
+			select: {
+				duration: true,
+				createdAt: true,
+				isAbsent: true,
+				isBillable: true,
+				startTime: true,
+				endTime: true,
+				project: {
+					select: {
+						name: true,
+					},
+				},
+				client: {
+					select: {
+						role: true,
+					},
+				},
+			},
+			orderBy: {
+				startTime: "desc",
 			},
 			take,
 		});
@@ -173,12 +215,36 @@ export const createLog = async (data: LogsSchema) => {
 				},
 			});
 		}
-		console.log(log, "created log");
+
 		invariant(log, "Log not created");
 
 		return log;
 	} catch (error) {
 		console.log(error);
 		return;
+	}
+};
+
+export const getTotalActivityDuration = async (
+	userId: string,
+	projectId: string
+) => {
+	try {
+		const totalDuration = await prisma.log.aggregate({
+			_sum: {
+				duration: true,
+			},
+			where: {
+				client: {
+					userId,
+				},
+				projectId,
+				isAbsent: false,
+			},
+		});
+
+		return { duration: totalDuration._sum.duration ?? 0 };
+	} catch (error) {
+		return { duration: 0 };
 	}
 };

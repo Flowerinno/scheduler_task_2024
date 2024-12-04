@@ -84,11 +84,8 @@ export const answerProjectInvitation = async (
 							email: answerFromUser.user.email,
 							firstName: answerFromUser.user.firstName,
 							lastName: answerFromUser.user.lastName,
-							user: {
-								connect: {
-									id: answerFromUser.userId,
-								},
-							},
+							createdById: answerFromUser.sentById,
+							userId: answerFromUser.userId,
 						},
 					},
 					project: {

@@ -61,53 +61,48 @@ export function TimePicker(props: TimePickerProps) {
 					</span>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-auto p-0">
-				<div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
-					<ScrollArea className="h-[300px] w-64 sm:w-auto">
-						<div className="flex sm:flex-col p-2">
-							{hours.reverse().map((hour) => {
-								const isEqual = date && date.getHours() === hour;
-								return (
-									<Button
-										key={hour}
-										size="icon"
-										variant={isEqual ? "default" : "ghost"}
-										className={`sm:w-full shrink-0 aspect-square ${
-											isEqual ? "bg-neutral-900 text-white" : ""
-										}`}
-										onClick={() => handleTimeChange("hour", hour.toString())}
-									>
-										{hour}
-									</Button>
-								);
-							})}
-						</div>
-						<ScrollBar orientation="horizontal" className="sm:hidden" />
-					</ScrollArea>
-					<ScrollArea className="w-64 sm:w-auto">
-						<div className="flex sm:flex-col p-2">
-							{Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => {
-								const isEqual = date && date.getMinutes() === minute;
-								return (
-									<Button
-										key={minute}
-										size="icon"
-										variant={isEqual ? "default" : "ghost"}
-										className={`sm:w-full shrink-0 aspect-square ${
-											isEqual ? "bg-neutral-900 text-white" : ""
-										}`}
-										onClick={() =>
-											handleTimeChange("minute", minute.toString())
-										}
-									>
-										{minute.toString().padStart(2, "0")}
-									</Button>
-								);
-							})}
-						</div>
-						<ScrollBar orientation="horizontal" className="sm:hidden" />
-					</ScrollArea>
-				</div>
+			<PopoverContent className="w-auto h-72 p-0 flex">
+				<ScrollArea className="h-72 sm:w-auto w-full">
+					<div className="flex sm:flex-col p-2">
+						{hours.reverse().map((hour) => {
+							const isEqual = date && date.getHours() === hour;
+							return (
+								<Button
+									key={hour}
+									size="icon"
+									variant={isEqual ? "default" : "ghost"}
+									className={`sm:w-full shrink-0 aspect-square ${
+										isEqual ? "bg-neutral-900 text-white" : ""
+									}`}
+									onClick={() => handleTimeChange("hour", hour.toString())}
+								>
+									{hour}
+								</Button>
+							);
+						})}
+					</div>
+					{/* <ScrollBar orientation="horizontal" className="sm:hidden" /> */}
+				</ScrollArea>
+				<ScrollArea className="w-64 sm:w-auto">
+					<div className="flex sm:flex-col p-2">
+						{Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => {
+							const isEqual = date && date.getMinutes() === minute;
+							return (
+								<Button
+									key={minute}
+									size="icon"
+									variant={isEqual ? "default" : "ghost"}
+									className={`sm:w-full shrink-0 aspect-square ${
+										isEqual ? "bg-neutral-900 text-white" : ""
+									}`}
+									onClick={() => handleTimeChange("minute", minute.toString())}
+								>
+									{minute.toString().padStart(2, "0")}
+								</Button>
+							);
+						})}
+					</div>
+				</ScrollArea>
 			</PopoverContent>
 		</Popover>
 	);

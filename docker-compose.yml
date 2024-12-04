@@ -1,8 +1,10 @@
-version: '3'
+version: "3"
 volumes:
   data:
+  cache:
 services:
-  postgres:
+  task_postgres:
+    container_name: task_postgres
     image: "postgres:latest"
     restart: always
     environment:

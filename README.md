@@ -2,13 +2,9 @@
 
 - Kononov Aleksandr 2024 js task
 
-# Temp TODO list:
+* Building and running in production docker:
+Build image:
+```docker build -f./Dockerfile . -t remix/run```
 
-- [x] Auth
-- [x] Registration
-- [x] Login
-- [x] Logout
-- [x] Roles: Admin/Manager/Worker
-- [x] Admin panel
-- [x] Manager panel
-- [x] Notifications in the header (invites for example)
+Run container:
+```docker run -p 3000:3000 -d remix/run```
