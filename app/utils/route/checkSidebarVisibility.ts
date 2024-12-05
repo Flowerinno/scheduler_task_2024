@@ -1,6 +1,6 @@
 import { ROUTES } from "~/constants/routes";
 
-const routesWithoutSidebar = [ROUTES.login, ROUTES.logout, ROUTES.register];
+const routesWithoutSidebar = [ROUTES.login, ROUTES.register];
 
 export const checkSidebarVisibility = (path: ROUTES) => {
 	return !routesWithoutSidebar.includes(path);

@@ -76,6 +76,7 @@ model Log {
   updatedAt    DateTime  @updatedAt
   title        String    @default("Untitled")
   content      String    @default("-")
+  date         DateTime  @default(now()) //indexed
   startTime    DateTime  @default(now())
   endTime      DateTime?
   duration     Float?
@@ -88,8 +89,9 @@ model Log {
   clientId     String
   project      Project?  @relation(fields: [projectId], references: [id])
   projectId    String?
+  version      Int       @default(1)
 
-  @@index([clientId, projectId, createdAt, modifiedById])
+  @@index([clientId, projectId, createdAt, modifiedById, date])
 }
 
 model Notification {

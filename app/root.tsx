@@ -84,10 +84,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<Toaster />
-				<Header
+				{/* <Header
 					userData={data?.user}
 					isAuthenticated={data?.user?.id ? true : false}
-				/>
+				/> */}
 				<main className="relative">
 					{isModalOpen && (
 						<CreateProjectModal

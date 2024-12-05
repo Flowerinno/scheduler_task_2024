@@ -52,7 +52,7 @@ export function AddActivityPopup({
 	selectedDate,
 	foundLog,
 }: AddActivityPopup) {
-	const fetcher = useFetcher();
+	const fetcher = useFetcher<{ message: string }>();
 
 	const { toast } = useToast();
 
@@ -77,6 +77,7 @@ export function AddActivityPopup({
 			modifiedById: createdById,
 			projectId,
 			clientId: client.id,
+			version: foundLog?.version || 1,
 		},
 		shouldValidate: "onSubmit",
 		onValidate: ({ formData }) => {
@@ -114,6 +115,7 @@ export function AddActivityPopup({
 
 			if (foundLog) {
 				formData.append("logId", foundLog.id);
+				formData.append("version", foundLog.version.toString());
 			}
 
 			const submission = parseWithZod(formData, { schema: logsSchema });
@@ -134,6 +136,17 @@ export function AddActivityPopup({
 		},
 		[timeState.endTime, timeState.startTime, onModalOpenChange]
 	);
+	console.log(fetcher?.data, "data");
+	// if (
+	// 	fetcher?.data &&
+	// 	fetcher?.data.message &&
+	// 	fetcher?.data.message !== "ok"
+	// ) {
+	// 	toast({
+	// 		title: fetcher.data.message,
+	// 		variant: "destructive",
+	// 	});
+	// }
 
 	const handleTimeChange = (type: StateTimeType, time: Date) => {
 		if (type === "endTime" && time < startTime) {

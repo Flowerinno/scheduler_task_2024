@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Log" ADD COLUMN     "version" INTEGER NOT NULL DEFAULT 1;

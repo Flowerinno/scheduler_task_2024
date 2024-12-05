@@ -1,4 +1,5 @@
 import { Link } from "@remix-run/react";
+import { formatDate } from "date-fns";
 import { Label } from "~/components/ui/label";
 import { ROUTES } from "~/constants/routes";
 import { AuthUser } from "~/services/auth.server";
@@ -8,7 +9,7 @@ interface ProfileProps {
 }
 
 const styles = {
-	li: "w-full flex md:flex-row md:items-center gap-2 justify-between border-[1px] border-black dark:border-white p-2 rounded-sm cursor-pointer flex-col items-start",
+	li: "w-full flex md:flex-row md:items-center gap-2 justify-between border-[1px] p-2 rounded-sm cursor-pointer flex-col items-start",
 };
 
 export const ProfileSection = ({ userData }: ProfileProps) => {
@@ -18,18 +19,24 @@ export const ProfileSection = ({ userData }: ProfileProps) => {
 		<div className="flex flex-col items-center justify-center gap-5 *:text-black w-full">
 			<ul className="flex flex-col items-start justify-center gap-2 p-3 w-full">
 				<li className={styles.li}>
-					<Label>full name</Label>
+					<Label>Full Name</Label>
 					<span className="font-bold text-sm">
 						{userData.firstName} {userData.lastName}
 					</span>
 				</li>
 				<li className={styles.li}>
-					<Label>email</Label>
+					<Label>Email</Label>
 					<span className="font-bold text-sm">{userData.email}</span>
 				</li>
 				<li className={styles.li}>
-					<Label>user status</Label>
+					<Label>Account Status</Label>
 					<span className="font-bold text-sm">{userData.status}</span>
+				</li>
+				<li className={styles.li}>
+					<Label>Registration Date</Label>
+					<span className="font-bold text-sm">
+						{formatDate(userData.createdAt, "dd/MM/yyyy")}
+					</span>
 				</li>
 
 				<Link

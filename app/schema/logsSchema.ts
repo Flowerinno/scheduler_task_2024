@@ -14,6 +14,7 @@ export const logsSchema = z
 		projectId: z.string().min(1, "Project ID is required"),
 		modifiedById: z.string().min(1, "Modified by ID is required"),
 		logId: z.string().optional(),
+		version: z.number().default(1),
 	})
 	.superRefine((data, ctx) => {
 		if (!data.isAbsent || data.isBillable) {

@@ -1,6 +1,7 @@
 import invariant from "tiny-invariant";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
+import { getStartOfTheDay } from "~/utils/date/dateFormatter";
 
 export const getUserProjects = async (userId: string) => {
 	try {
@@ -192,36 +193,58 @@ export const createLog = async (data: LogsSchema) => {
 	try {
 		const duration = data.endTime.getTime() - data.startTime.getTime();
 
-		const { logId, ...rest } = data;
+		const { logId, version, ...rest } = data;
 
-		let log;
+		const onDate = getStartOfTheDay(data.startTime);
 
-		if (logId) {
-			log = await prisma.log.update({
+		return await prisma.$transaction(async (prisma) => {
+			const conflictingRecord = await prisma.log.findFirst({
 				where: {
 					clientId: data.clientId,
-					id: data.logId,
+					projectId: data.projectId,
+					version,
+					date: onDate,
 				},
+			});
+
+			invariant(conflictingRecord === null, "Conflicting log found");
+
+			return prisma.log.create({
 				data: {
 					...rest,
+					date: onDate,
 					duration,
 				},
 			});
-		} else {
-			log = await prisma.log.create({
-				data: {
-					...rest,
-					duration,
-				},
-			});
-		}
-
-		invariant(log, "Log not created");
-
-		return log;
+		});
 	} catch (error) {
-		console.log(error);
-		return;
+		return { message: "Could not create log, version mismatch" };
+	}
+};
+
+export const updateLog = async (data: LogsSchema) => {
+	try {
+		const duration = data.endTime.getTime() - data.startTime.getTime();
+
+		const { logId, version, ...rest } = data;
+
+		return await prisma.$transaction(async (prisma) => {
+			return prisma.log.update({
+				where: {
+					id: logId,
+					version,
+				},
+				data: {
+					...rest,
+					duration,
+					version: {
+						increment: 1,
+					},
+				},
+			});
+		});
+	} catch (error) {
+		return { message: "Could not update log, version mismatch" };
 	}
 };
 

@@ -19,8 +19,9 @@ import {
 	User2Icon,
 	ChartArea,
 	MenuIcon,
+	LogOutIcon,
 } from "lucide-react";
-import { Link, useNavigate } from "@remix-run/react";
+import { Form, Link, useNavigate } from "@remix-run/react";
 import { AuthUser } from "~/services/auth.server";
 
 const items = [
@@ -38,6 +39,11 @@ const items = [
 		title: "Profile",
 		url: ROUTES.profile,
 		icon: User2Icon,
+	},
+	{
+		title: "Logout",
+		url: ROUTES.logout,
+		icon: LogOutIcon,
 	},
 ];
 

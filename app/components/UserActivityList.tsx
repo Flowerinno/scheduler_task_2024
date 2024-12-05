@@ -109,25 +109,23 @@ export const UserActivityList = <T,>({ logs }: UserActivityListProps<T>) => {
 												log.isAbsent && "text-red-300",
 											])}
 										>
-											{" "}
 											{log.isBillable && !log.isAbsent ? "Billable" : "Absent"}
 										</strong>
 									</Label>
-									<Label>Created At: {creationDate}</Label>
+									<Label>Added At: {creationDate}</Label>
 								</div>
-								{
-									<div className="flex flex-col gap-1">
-										<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
-											Duration: {duration}
-										</Label>
-										<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
-											Start Time: {startTime}
-										</Label>
-										<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
-											End Time: {endTime}
-										</Label>
-									</div>
-								}
+
+								<div className="flex flex-col gap-1">
+									<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
+										Duration: {duration}
+									</Label>
+									<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
+										Start Time: {startTime}
+									</Label>
+									<Label className={cn([log.isAbsent && "", "flex-[0.2]"])}>
+										End Time: {endTime}
+									</Label>
+								</div>
 							</div>
 							<Separator />
 						</>

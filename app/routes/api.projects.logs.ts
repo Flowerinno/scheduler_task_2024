@@ -2,10 +2,9 @@ import { parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs } from "@remix-run/node";
 import { ERROR_MESSAGES } from "~/constants/errors";
 import { HTTP_STATUS } from "~/constants/general";
-import { RESPONSE_MESSAGE } from "~/constants/messages";
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
 import { logsSchema } from "~/schema/logsSchema";
-import { createLog } from "~/services/project.server";
+import { createLog, updateLog } from "~/services/project.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	try {
@@ -22,20 +21,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			submission.value.projectId
 		);
 
-		const log = await createLog(submission.value);
-
-		if (log) {
-			return {
-				message: RESPONSE_MESSAGE.ok,
-				status: HTTP_STATUS.OK,
-				data: { log },
-			};
+		if (submission.value.logId) {
+			return await updateLog(submission.value);
+		} else {
+			return await createLog(submission.value);
 		}
-
-		return {
-			message: ERROR_MESSAGES.generalError,
-			status: HTTP_STATUS.BAD_REQUEST,
-		};
 	} catch (error) {
 		console.log(error);
 		return {
