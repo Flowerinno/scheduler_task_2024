@@ -136,17 +136,6 @@ export function AddActivityPopup({
 		},
 		[timeState.endTime, timeState.startTime, onModalOpenChange]
 	);
-	console.log(fetcher?.data, "data");
-	// if (
-	// 	fetcher?.data &&
-	// 	fetcher?.data.message &&
-	// 	fetcher?.data.message !== "ok"
-	// ) {
-	// 	toast({
-	// 		title: fetcher.data.message,
-	// 		variant: "destructive",
-	// 	});
-	// }
 
 	const handleTimeChange = (type: StateTimeType, time: Date) => {
 		if (type === "endTime" && time < startTime) {

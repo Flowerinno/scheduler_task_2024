@@ -8,7 +8,7 @@ import {
 	useSearchParams,
 } from "@remix-run/react";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DayContentProps } from "react-day-picker";
 import invariant from "tiny-invariant";
 import { CalendarComponent } from "~/components/Calendar";
@@ -29,7 +29,7 @@ import { AddActivityPopup } from "~/components/AddActivityPopup";
 import { ROLE } from "~/types";
 import { Button } from "~/components/ui/button";
 import { Alert } from "~/components/Alert";
-import { Log } from "@prisma/client";
+import { Log, Tag } from "@prisma/client";
 import { cn } from "~/lib/utils";
 import { Separator } from "~/components/ui/separator";
 
@@ -38,6 +38,10 @@ import {
 	calculateMonthLogs,
 } from "~/utils/date/dateFormatter";
 import { ROUTES } from "~/constants/routes";
+import MultipleSelector, { Option } from "~/components/ui/multiple-selector";
+import { toast } from "~/hooks/use-toast";
+
+type ExtendedOption = Option & { id: string };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId; // client id
@@ -147,6 +151,66 @@ export default function TeamMember() {
 
 	const absentDaysCount = logs.filter((log) => log.isAbsent).length;
 
+	let clientTags = clientInfo.clientsOnTags.map(({ tag }) => {
+		return {
+			id: tag.id,
+			label: tag.name,
+			value: tag.name,
+		};
+	});
+
+	const allTags = clientInfo.clientsOnProjects[0].project.tag.map((tag) => {
+		return {
+			id: tag.id,
+			label: tag.name,
+			value: tag.name,
+		};
+	});
+
+	const onTagChange = (tags: ExtendedOption[]) => {
+		let addedTag: ExtendedOption | undefined,
+			removedTag: ExtendedOption | undefined;
+
+		if (clientTags.length < tags.length) {
+			addedTag = tags.find((tag) => !clientTags.find((t) => t.id === tag.id));
+		}
+
+		if (clientTags.length > tags.length) {
+			removedTag = clientTags.find((tag) => !tags.find((t) => t.id === tag.id));
+		}
+
+		const formData = new FormData();
+		formData.append("clientId", clientInfo.id);
+		formData.append("userId", user.id);
+		formData.append("projectId", project.id);
+
+		if (addedTag) {
+			formData.append("action", "addTag");
+			formData.append("tagId", addedTag.id);
+			fetcher.submit(formData, {
+				method: "POST",
+				action: "/api/projects/clients",
+			});
+		}
+
+		if (removedTag) {
+			formData.append("action", "removeTag");
+			formData.append("tagId", removedTag.id);
+
+			fetcher.submit(formData, {
+				method: "POST",
+				action: "/api/projects/clients",
+			});
+
+			if (tags.length === 0) {
+				clientTags = [];
+			}
+		}
+	};
+
+	const isSubmitting =
+		fetcher.state === "loading" || fetcher.state === "submitting";
+
 	return (
 		<div className="p-10 relative flex flex-col gap-12 w-full">
 			{isModalOpen && (
@@ -176,29 +240,48 @@ export default function TeamMember() {
 			<Link to={backRoute}>
 				<ArrowLeft className="absolute top-4 left-4 cursor-pointer text-black" />
 			</Link>
-			<div className="flex gap-2 items-center">
-				<Label className="text-2xl">
-					{clientInfo.firstName} {clientInfo.lastName} -{" "}
-				</Label>
-				Í
-				<Label className="font-bold text-2xl text-gray-400">
-					{clientInfo.clientsOnProjects[0].project.name}
-				</Label>
-				{isAdmin && (
-					<RoleSelector
-						role={clientInfo.role as ROLE}
-						clientId={clientInfo.id}
-						userId={user.id}
-						projectId={project.id}
-					/>
-				)}
-				<Button
-					className="text-red-500 h-6 text-xs"
-					variant={"outline"}
-					onClick={() => setIsAlertOpen(true)}
-				>
-					Remove from project
-				</Button>
+
+			<div className="flex flex-col gap-2">
+				<div className="flex gap-2 items-center">
+					<Label className="text-2xl">
+						{clientInfo.firstName} {clientInfo.lastName} -{" "}
+					</Label>
+					Í
+					<Label className="font-bold text-2xl text-gray-400">
+						{clientInfo.clientsOnProjects[0].project.name}
+					</Label>
+					{isAdmin && (
+						<RoleSelector
+							role={clientInfo.role as ROLE}
+							clientId={clientInfo.id}
+							userId={user.id}
+							projectId={project.id}
+						/>
+					)}
+					<Button
+						className="text-red-500 h-6 text-xs"
+						variant={"outline"}
+						onClick={() => setIsAlertOpen(true)}
+					>
+						Remove from project
+					</Button>
+				</div>
+				<MultipleSelector
+					value={
+						clientTags?.length > 0 && !isSubmitting ? clientTags : undefined
+					}
+					defaultOptions={allTags}
+					placeholder="No tags yet..."
+					hideClearAllButton
+					maxSelected={5}
+					onChange={(tags) => onTagChange(tags as ExtendedOption[])}
+					hidePlaceholderWhenSelected
+					emptyIndicator={
+						<Label className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+							No results found.
+						</Label>
+					}
+				/>
 			</div>
 
 			<div className="flex flex-col gap-2">

@@ -25,7 +25,6 @@ import { useState } from "react";
 import { ROLE } from "~/types";
 import { Alert } from "~/components/Alert";
 import { ERROR_MESSAGES } from "~/constants/errors";
-import { HTTP_STATUS } from "~/constants/general";
 import {
 	calculateDuration,
 	calculateMonthLogs,
@@ -34,6 +33,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
+import { CreateTagPopup } from "~/components/CreateTagPopup";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -59,7 +59,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	} catch (error) {
 		return {
 			message: ERROR_MESSAGES.generalError,
-			status: HTTP_STATUS.NOT_FOUND,
 		};
 	}
 };
@@ -102,6 +101,7 @@ export default function Project() {
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isAlertOpen, setIsAlertOpen] = useState(false);
+	const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
 	const [toogleGroup, setToogleGroup] = useState<ROLE[]>([]);
 
@@ -156,6 +156,13 @@ export default function Project() {
 					description="Are you sure you want to delete this project?"
 				/>
 			)}
+			{isTagModalOpen && (
+				<CreateTagPopup
+					projectId={project.id}
+					isModalOpen={isTagModalOpen}
+					onModalOpenChange={setIsTagModalOpen}
+				/>
+			)}
 
 			<Link to={ROUTES.projects}>
 				<ArrowLeft className="absolute top-4 left-4 cursor-pointer text-black" />
@@ -180,6 +187,14 @@ export default function Project() {
 
 						{client.role === ROLE.ADMIN && (
 							<>
+								<Button
+									className="text-white"
+									variant={"default"}
+									onClick={() => setIsTagModalOpen(true)}
+								>
+									Create tag
+								</Button>
+
 								<Button
 									className="text-white"
 									variant={"default"}
@@ -225,7 +240,7 @@ export default function Project() {
 						<Label className="text-xl font-[400]">Logged Current Month</Label>
 						<br />
 						<span className="text-black text-4xl self-center">
-							{loggedMonthHours} / h
+							{loggedMonthHours}:00 / h
 						</span>
 					</div>
 					<Separator orientation="vertical" className="min-h-24" />
@@ -279,42 +294,48 @@ export default function Project() {
 					/>
 				</div>
 				<Separator />
+				<div className="flex gap-4">
+					{project.clientsOnProjects
+						.filter((c) => {
+							const isMatch =
+								c.client.firstName
+									.toLowerCase()
+									.includes(search.toLowerCase()) ||
+								c.client.lastName
+									.toLowerCase()
+									.includes(search.toLowerCase()) ||
+								c.client.email.toLowerCase().includes(search.toLowerCase());
 
-				{project.clientsOnProjects
-					.filter((c) => {
-						const isMatch =
-							c.client.firstName.toLowerCase().includes(search.toLowerCase()) ||
-							c.client.lastName.toLowerCase().includes(search.toLowerCase()) ||
-							c.client.email.toLowerCase().includes(search.toLowerCase());
+							if (isMatch) {
+								return true;
+							}
+						})
+						.map((c) => {
+							const to =
+								c.client.userId === user.id || client.role === "USER"
+									? "#"
+									: `${pathName}/team/${c.client.id}`;
 
-						if (isMatch) {
-							return true;
-						}
-					})
-					.map((c) => {
-						const to =
-							c.client.userId === user.id || client.role === "USER"
-								? "#"
-								: `${pathName}/team/${c.client.id}`;
+							if (
+								toogleGroup.length &&
+								!toogleGroup.includes(c.client.role as ROLE)
+							) {
+								return null;
+							}
 
-						if (
-							toogleGroup.length &&
-							!toogleGroup.includes(c.client.role as ROLE)
-						) {
-							return null;
-						}
-
-						return (
-							<Link key={c.client.userId} to={to}>
-								<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150">
-									{c.client.firstName} {c.client.lastName} | {c.client.email} |{" "}
-									<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
-										{c.client.role}
-									</span>
-								</Label>
-							</Link>
-						);
-					})}
+							return (
+								<Link key={c.client.userId} to={to}>
+									<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150">
+										{c.client.firstName} {c.client.lastName} | {c.client.email}{" "}
+										|{" "}
+										<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
+											{c.client.role}
+										</span>
+									</Label>
+								</Link>
+							);
+						})}
+				</div>
 			</div>
 		</div>
 	);

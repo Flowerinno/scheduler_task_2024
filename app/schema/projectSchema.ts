@@ -30,6 +30,12 @@ export const clientApiSchema = z.object({
 	action: z.enum(["updateRole", "deleteClient", "createClient"]),
 });
 
+export const createTagSchema = z.object({
+	tag: z.string().min(1, "Tag name must be at least 1 character"),
+	projectId: z.string(),
+});
+
 export type CreateProjectSchema = z.infer<typeof createProjectSchema>;
 export type CreateActivitySchema = z.infer<typeof createActivitySchema>;
 export type ClientApiSchema = z.infer<typeof clientApiSchema>;
+export type CreateTagSchema = z.infer<typeof createTagSchema>;

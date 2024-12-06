@@ -138,8 +138,9 @@ model ClientsOnTags {
   createdAt DateTime @default(now())
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId  String
-  tag       Tag      @relation(fields: [tagId], references: [id])
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId     String
+  projectId String
 
-  @@index([clientId, tagId])
+  @@index([clientId, tagId, projectId])
 }

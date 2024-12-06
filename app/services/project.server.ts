@@ -271,3 +271,27 @@ export const getTotalActivityDuration = async (
 		return { duration: 0 };
 	}
 };
+
+export const createTag = async (projectId: string, tag: string) => {
+	try {
+		const existingTag = await prisma.tag.findFirst({
+			where: {
+				projectId,
+				name: tag,
+			},
+		});
+
+		if (existingTag) {
+			return { message: "Tag already exists" };
+		}
+
+		return await prisma.tag.create({
+			data: {
+				name: tag,
+				projectId,
+			},
+		});
+	} catch (error) {
+		return { message: "Could not create tag" };
+	}
+};

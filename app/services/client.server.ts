@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from "~/constants/errors";
 import prisma from "~/lib/prisma";
 import { ROLE } from "~/types";
 
@@ -58,6 +59,7 @@ export const getClientForMonth = async (
 								id: true,
 								name: true,
 								createdById: true,
+								tag: true,
 								log: {
 									where: {
 										clientId,
@@ -114,7 +116,15 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 								},
 							},
 						},
-						client: true,
+						client: {
+							include: {
+								clientsOnTags: {
+									select: {
+										tag: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -141,7 +151,7 @@ export const updateRole = async (clientId: string, role: ROLE) => {
 
 		return client;
 	} catch (error) {
-		return;
+		return { message: ERROR_MESSAGES.generalError };
 	}
 };
 
@@ -177,6 +187,7 @@ export const inviteUserToProject = async (
 		});
 	} catch (error) {
 		console.log(`Failed to invite user to project: ${error}`);
+		return { message: ERROR_MESSAGES.generalError };
 	}
 };
 
@@ -191,5 +202,47 @@ export const removeClientFromProject = async (clientId: string) => {
 		return client;
 	} catch (error) {
 		return;
+	}
+};
+
+export const attachTag = async (
+	clientId: string,
+	tagId: string,
+	projectId: string
+) => {
+	try {
+		const attachedTag = await prisma.clientsOnTags.create({
+			data: {
+				clientId,
+				tagId,
+				projectId,
+			},
+		});
+
+		return attachedTag;
+	} catch (error) {
+		console.log(error);
+		return { message: ERROR_MESSAGES.generalError };
+	}
+};
+
+export const detachTag = async (
+	clientId: string,
+	tagId: string,
+	projectId: string
+) => {
+	try {
+		const removedTags = await prisma.clientsOnTags.deleteMany({
+			where: {
+				clientId,
+				tagId,
+				projectId,
+			},
+		});
+		console.log(removedTags);
+		return removedTags;
+	} catch (error) {
+		console.log(error);
+		return { message: ERROR_MESSAGES.generalError };
 	}
 };

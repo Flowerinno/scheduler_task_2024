@@ -1,16 +1,22 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 import { ERROR_MESSAGES } from "~/constants/errors";
-import { HTTP_STATUS } from "~/constants/general";
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
 import {
+	attachTag,
+	detachTag,
 	inviteUserToProject,
 	removeClientFromProject,
 	updateRole,
 } from "~/services/client.server";
 import { ROLE } from "~/types";
 
-type Action = "updateRole" | "deleteClient" | "createClient";
+type Action =
+	| "updateRole"
+	| "deleteClient"
+	| "createClient"
+	| "addTag"
+	| "removeTag";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	try {
@@ -37,7 +43,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 					return {
 						message: "Clients added successfully",
-						status: HTTP_STATUS.OK,
 					};
 				}
 			}
@@ -56,6 +61,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			const projectId = formData.get("projectId") as string;
 			invariant(projectId, "Project ID is required");
 
+			const tagId = formData.get("tagId") as string;
+
 			await authenticateAdmin(userId, projectId);
 
 			if (action === "updateRole") {
@@ -64,18 +71,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			if (action === "deleteClient") {
 				return removeClientFromProject(clientId);
 			}
+
+			if (action === "addTag") {
+				invariant(tagId, "Tag ID is required");
+				return await attachTag(clientId, tagId, projectId);
+			}
+
+			if (action === "removeTag") {
+				invariant(tagId, "Tag ID is required");
+				return await detachTag(clientId, tagId, projectId);
+			}
 		} else {
 			throw new Error("Unsupported content type");
 		}
 
 		return {
 			message: ERROR_MESSAGES.generalError,
-			status: HTTP_STATUS.BAD_REQUEST,
 		};
 	} catch (error) {
 		return {
 			message: ERROR_MESSAGES.generalError,
-			status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
 		};
 	}
 };
