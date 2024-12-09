@@ -10,7 +10,13 @@ import {
 	removeProject,
 } from "~/services/project.server";
 import { ROUTES } from "~/constants/routes";
-import { Link, useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import {
+	Link,
+	useFetcher,
+	useLoaderData,
+	useLocation,
+	useSearchParams,
+} from "@remix-run/react";
 import {
 	authenticateAdmin,
 	authenticateRoute,
@@ -34,6 +40,7 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
 import { CreateTagPopup } from "~/components/CreateTagPopup";
+import { Badge } from "~/components/ui/badge";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -70,8 +77,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 		const projectId = params.projectId;
 		invariant(projectId, "Project ID is required");
+		const url = new URL(request.url);
+		const search = url.searchParams.get("search") ?? undefined;
 
-		const project = await getClientProjectById(projectId, user.id);
+		const project = await getClientProjectById(projectId, user.id, search);
 		invariant(project, "Project not found");
 
 		const { duration } = await getTotalActivityDuration(user.id, projectId);
@@ -105,7 +114,9 @@ export default function Project() {
 
 	const [toogleGroup, setToogleGroup] = useState<ROLE[]>([]);
 
-	const [search, setSearch] = useState("");
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const search = searchParams.get("search") || "";
 
 	const fetcher = useFetcher();
 
@@ -134,6 +145,15 @@ export default function Project() {
 			: [...toogleGroup, role];
 
 		setToogleGroup(newToogleGroup);
+	};
+
+	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.value === "") {
+			searchParams.delete("search");
+			setSearchParams(searchParams);
+			return;
+		}
+		setSearchParams({ search: e.target.value });
 	};
 
 	return (
@@ -286,15 +306,17 @@ export default function Project() {
 						</ToggleGroupItem>
 					</ToggleGroup>
 					<Separator orientation="vertical" />
+
 					<Input
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						defaultValue={search}
+						name="search"
+						onChange={(e) => handleSearch(e)}
 						className="flex-1 focus:no-underline"
-						placeholder="Search by name or email"
+						placeholder="Search by name/email/tag"
 					/>
 				</div>
 				<Separator />
-				<div className="flex gap-4">
+				<div className="flex gap-2 flex-col">
 					{project.clientsOnProjects
 						.filter((c) => {
 							const isMatch =
@@ -304,7 +326,10 @@ export default function Project() {
 								c.client.lastName
 									.toLowerCase()
 									.includes(search.toLowerCase()) ||
-								c.client.email.toLowerCase().includes(search.toLowerCase());
+								c.client.email.toLowerCase().includes(search.toLowerCase()) ||
+								c.client.clientsOnTags.some((cot) =>
+									cot.tag.name.toLowerCase().includes(search.toLowerCase())
+								);
 
 							if (isMatch) {
 								return true;
@@ -323,14 +348,26 @@ export default function Project() {
 								return null;
 							}
 
+							const tags = c.client.clientsOnTags.map((cot) => cot.tag.name);
+
 							return (
 								<Link key={c.client.userId} to={to}>
-									<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150">
+									<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
 										{c.client.firstName} {c.client.lastName} | {c.client.email}{" "}
 										|{" "}
 										<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
 											{c.client.role}
-										</span>
+										</span>{" "}
+										{tags.map((tag) => (
+											<Badge
+												key={tag}
+												className="max-h-[18px] mr-1"
+												aria-disabled
+												variant={"outline"}
+											>
+												{tag}
+											</Badge>
+										))}
 									</Label>
 								</Link>
 							);

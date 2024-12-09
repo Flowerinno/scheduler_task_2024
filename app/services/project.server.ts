@@ -36,7 +36,8 @@ export const getUserProjects = async (userId: string) => {
 
 export const getClientProjectById = async (
 	projectId: string,
-	userId: string
+	userId: string,
+	searchQuery: string | undefined
 ) => {
 	try {
 		const project = await prisma.project.findUnique({
@@ -56,9 +57,61 @@ export const getClientProjectById = async (
 				description: true,
 				createdAt: true,
 				clientsOnProjects: {
+					...(searchQuery
+						? {
+								where: {
+									client: {
+										OR: [
+											{
+												userId,
+											},
+											{
+												firstName: {
+													contains: searchQuery,
+													mode: "insensitive",
+												},
+											},
+											{
+												lastName: {
+													contains: searchQuery,
+													mode: "insensitive",
+												},
+											},
+											{
+												email: {
+													contains: searchQuery,
+													mode: "insensitive",
+												},
+											},
+											{
+												clientsOnTags: {
+													some: {
+														tag: {
+															name: {
+																contains: searchQuery,
+																mode: "insensitive",
+															},
+														},
+													},
+												},
+											},
+										],
+									},
+								},
+						  }
+						: {}),
 					select: {
-						client: true,
+						client: {
+							include: {
+								clientsOnTags: {
+									select: {
+										tag: true,
+									},
+								},
+							},
+						},
 					},
+					take: 10,
 				},
 				createdBy: {
 					select: {
@@ -80,6 +133,7 @@ export const getClientProjectById = async (
 
 		return project;
 	} catch (error) {
+		console.log(error, "error");
 		return null;
 	}
 };
