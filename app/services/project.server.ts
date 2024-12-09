@@ -1,7 +1,12 @@
 import invariant from "tiny-invariant";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
-import { getStartOfTheDay } from "~/utils/date/dateFormatter";
+import { FetchProjectStatistics } from "~/types";
+import {
+	getEndOfCurrentWeek,
+	getStartOfCurrentWeek,
+	getStartOfTheDay,
+} from "~/utils/date/dateFormatter";
 
 export const getUserProjects = async (userId: string) => {
 	try {
@@ -347,5 +352,42 @@ export const createTag = async (projectId: string, tag: string) => {
 		});
 	} catch (error) {
 		return { message: "Could not create tag" };
+	}
+};
+
+export const fetchProjectStatistics = async ({
+	projectId,
+	startDate,
+	endDate,
+}: FetchProjectStatistics) => {
+	const gte = startDate ? startDate : getStartOfCurrentWeek();
+
+	const lte = endDate ? endDate : getEndOfCurrentWeek();
+
+	try {
+		const stats = await prisma.project.findUnique({
+			where: {
+				id: projectId,
+			},
+			include: {
+				log: {
+					where: {
+						startTime: {
+							gte,
+							lte,
+						},
+					},
+				},
+				clientsOnProjects: {
+					select: {
+						client: true,
+					},
+				},
+			},
+		});
+
+		return stats || [];
+	} catch (error) {
+		return [];
 	}
 };

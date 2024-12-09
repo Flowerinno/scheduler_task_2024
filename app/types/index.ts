@@ -15,3 +15,9 @@ export enum ROLE {
 	MANAGER = "MANAGER",
 	USER = "USER",
 }
+
+export type FetchProjectStatistics = {
+	projectId: string;
+	startDate: Date;
+	endDate: Date;
+};

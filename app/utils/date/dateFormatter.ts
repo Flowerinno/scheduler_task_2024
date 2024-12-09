@@ -63,3 +63,21 @@ export const getEndOfTheDay = (date: Date) => {
 	newDate.setHours(23, 59, 59, 999);
 	return newDate;
 };
+
+export const getStartOfCurrentWeek = () => {
+	const now = new Date();
+	const day = now.getDay();
+	const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+	const startOfWeek = new Date(now.setDate(diff));
+	startOfWeek.setHours(0, 0, 0, 0);
+	return startOfWeek;
+};
+
+export const getEndOfCurrentWeek = () => {
+	const now = new Date();
+	const day = now.getDay();
+	const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+	const endOfWeek = new Date(now.setDate(diff + 6));
+	endOfWeek.setHours(23, 59, 59, 999);
+	return endOfWeek;
+};

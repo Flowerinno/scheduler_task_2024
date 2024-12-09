@@ -15,6 +15,7 @@ import {
 	useFetcher,
 	useLoaderData,
 	useLocation,
+	useNavigate,
 	useSearchParams,
 } from "@remix-run/react";
 import {
@@ -77,6 +78,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 		const projectId = params.projectId;
 		invariant(projectId, "Project ID is required");
+
 		const url = new URL(request.url);
 		const search = url.searchParams.get("search") ?? undefined;
 
@@ -119,8 +121,8 @@ export default function Project() {
 	const search = searchParams.get("search") || "";
 
 	const fetcher = useFetcher();
-
 	const pathName = useLocation().pathname;
+	const navigate = useNavigate();
 
 	const loggedMonthHours = calculateMonthLogs(project.log, new Date());
 
@@ -204,6 +206,18 @@ export default function Project() {
 								View activities
 							</Link>
 						</Button>
+
+						{(client.role === ROLE.ADMIN || client.role === ROLE.MANAGER) && (
+							<Button
+								className="text-white bg-purple-300 hover:bg-purple-400"
+								variant={"default"}
+								onClick={() =>
+									navigate(`${ROUTES.projects}/${project.id}/statistics`)
+								}
+							>
+								Statistics
+							</Button>
+						)}
 
 						{client.role === ROLE.ADMIN && (
 							<>
@@ -352,7 +366,7 @@ export default function Project() {
 
 							return (
 								<Link key={c.client.userId} to={to}>
-									<Label className="text-base cursor-pointer hover:underline hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
+									<Label className="text-base cursor-pointer  hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
 										{c.client.firstName} {c.client.lastName} | {c.client.email}{" "}
 										|{" "}
 										<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
@@ -361,7 +375,7 @@ export default function Project() {
 										{tags.map((tag) => (
 											<Badge
 												key={tag}
-												className="max-h-[18px] mr-1"
+												className="max-h-[18px] mr-1 no-underline"
 												aria-disabled
 												variant={"outline"}
 											>

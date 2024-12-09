@@ -2,6 +2,7 @@ export enum ROUTES {
 	projects = "/projects",
 	project = "/projects/",
 	projectTeamMember = "/projects/:projectId/team/:teamMemberId",
+	projectStatistics = "/projects/:projectId/statistics",
 	createProject = "/projects/create",
 	login = "/login",
 	logout = "/logout",
