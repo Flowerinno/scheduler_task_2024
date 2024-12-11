@@ -1,5 +1,6 @@
 import prisma from "~/lib/prisma";
 import { Notification } from "@prisma/client";
+import { HTTP_STATUS } from "~/constants/general";
 
 export const getUsersByEmail = async (email: string) => {
 	try {
@@ -77,34 +78,29 @@ export const answerProjectInvitation = async (
 		});
 
 		if (answer === true) {
-			await prisma.clientsOnProjects.create({
+			await prisma.client.create({
 				data: {
-					client: {
-						create: {
-							email: answerFromUser.user.email,
-							firstName: answerFromUser.user.firstName,
-							lastName: answerFromUser.user.lastName,
-							createdById: answerFromUser.sentById,
-							userId: answerFromUser.userId,
-						},
-					},
-					project: {
-						connect: {
-							id: projectId,
-						},
-					},
+					email: answerFromUser.user.email,
+					firstName: answerFromUser.user.firstName,
+					lastName: answerFromUser.user.lastName,
+					createdById: answerFromUser.sentById,
+					userId: answerFromUser.userId,
+					projectId,
 				},
 			});
 		}
+
+		return { status: HTTP_STATUS.OK };
 	} catch (error) {
-		return;
+		return null;
 	}
 };
 
 export const removeNotification = async (notificationId: string) => {
 	try {
 		await prisma.notification.delete({ where: { id: notificationId } });
+		return { status: HTTP_STATUS.OK };
 	} catch (error) {
-		return;
+		return null;
 	}
 };

@@ -42,37 +42,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			},
 		});
 		invariant(user, "User not found");
-
-		const client = await prisma.client.create({
-			data: {
-				email: user.email,
-				userId: user.id,
-				firstName: user.firstName,
-				lastName: user.lastName,
-				role: ROLE.ADMIN,
-			},
-		});
-		invariant(client, "Client not created");
-
 		const project = await prisma.project.create({
 			data: {
 				name: data.name,
 				description: data.description,
 				createdById: data.createdById,
-				clientsOnProjects: {
+				clients: {
 					create: {
-						clientId: client.id,
+						email: user.email,
+						userId: user.id,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						role: ROLE.ADMIN,
 					},
 				},
 			},
 		});
-
-		if (!project) {
-			return {
-				message: ERROR_MESSAGES.generalError,
-				status: HTTP_STATUS.NOT_FOUND,
-			};
-		}
+		invariant(project, "Project not created");
 
 		const invitedClients = data?.clients || [];
 

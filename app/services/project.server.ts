@@ -2,30 +2,24 @@ import invariant from "tiny-invariant";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
 import { FetchProjectStatistics } from "~/types";
-import {
-	getEndOfCurrentWeek,
-	getStartOfCurrentWeek,
-	getStartOfTheDay,
-} from "~/utils/date/dateFormatter";
+import { getStartOfTheDay } from "~/utils/date/dateFormatter";
 
 export const getUserProjects = async (userId: string) => {
 	try {
-		const projects = await prisma.clientsOnProjects.findMany({
-			where: {
-				client: {
-					userId,
+		const projects = await prisma.project.findMany({
+			include: {
+				clients: {
+					where: {
+						userId,
+					},
 				},
-			},
-			select: {
-				project: true,
-				client: true,
 			},
 		});
 
 		for (const project of projects) {
-			const teamCount = await prisma.clientsOnProjects.count({
+			const teamCount = await prisma.client.count({
 				where: {
-					projectId: project.project.id,
+					projectId: project.id,
 				},
 			});
 
@@ -48,71 +42,58 @@ export const getClientProjectById = async (
 		const project = await prisma.project.findUnique({
 			where: {
 				id: projectId,
-				clientsOnProjects: {
-					some: {
-						client: {
-							userId,
-						},
-					},
-				},
 			},
 			select: {
 				id: true,
 				name: true,
 				description: true,
 				createdAt: true,
-				clientsOnProjects: {
+				clients: {
 					...(searchQuery
 						? {
 								where: {
-									client: {
-										OR: [
-											{
-												userId,
+									OR: [
+										{
+											userId,
+										},
+										{
+											firstName: {
+												contains: searchQuery,
+												mode: "insensitive",
 											},
-											{
-												firstName: {
-													contains: searchQuery,
-													mode: "insensitive",
-												},
+										},
+										{
+											lastName: {
+												contains: searchQuery,
+												mode: "insensitive",
 											},
-											{
-												lastName: {
-													contains: searchQuery,
-													mode: "insensitive",
-												},
+										},
+										{
+											email: {
+												contains: searchQuery,
+												mode: "insensitive",
 											},
-											{
-												email: {
-													contains: searchQuery,
-													mode: "insensitive",
-												},
-											},
-											{
-												clientsOnTags: {
-													some: {
-														tag: {
-															name: {
-																contains: searchQuery,
-																mode: "insensitive",
-															},
+										},
+										{
+											clientsOnTags: {
+												some: {
+													tag: {
+														name: {
+															contains: searchQuery,
+															mode: "insensitive",
 														},
 													},
 												},
 											},
-										],
-									},
+										},
+									],
 								},
 						  }
 						: {}),
-					select: {
-						client: {
-							include: {
-								clientsOnTags: {
-									select: {
-										tag: true,
-									},
-								},
+					include: {
+						clientsOnTags: {
+							select: {
+								tag: true,
 							},
 						},
 					},
@@ -361,21 +342,16 @@ export const getProjectStatistics = async ({
 	endDate,
 	role,
 }: FetchProjectStatistics) => {
-	console.log(role, "role?");
 	try {
-		const stats = await prisma.client.findMany({
+		const test = await prisma.client.findMany({
 			where: {
-				clientsOnProjects: {
-					every: {
-						projectId,
-					},
-				},
 				...(role ? { role } : {}),
+				projectId,
 			},
 			include: {
 				logs: {
 					where: {
-						startTime: {
+						date: {
 							gte: startDate,
 							lte: endDate,
 						},
@@ -384,7 +360,23 @@ export const getProjectStatistics = async ({
 			},
 		});
 
-		return stats || [];
+		const stats = await prisma.log.findMany({
+			where: {
+				projectId,
+				startTime: {
+					gte: startDate,
+					lte: endDate,
+				},
+				client: {
+					...(role ? { role } : {}),
+				},
+			},
+			include: {
+				client: true,
+			},
+		});
+
+		return test || [];
 	} catch (error) {
 		return [];
 	}

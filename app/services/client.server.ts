@@ -2,7 +2,7 @@ import { ERROR_MESSAGES } from "~/constants/errors";
 import prisma from "~/lib/prisma";
 import { ROLE } from "~/types";
 
-export const getClientForMonth = async (
+export const getClientInfoForMonth = async (
 	clientId: string,
 	projectId: string,
 	take: number = 31,
@@ -23,6 +23,7 @@ export const getClientForMonth = async (
 		const clientInfo = await prisma.client.findUnique({
 			where: {
 				id: clientId,
+				projectId,
 			},
 			select: {
 				id: true,
@@ -48,29 +49,21 @@ export const getClientForMonth = async (
 						tag: true,
 					},
 				},
-				clientsOnProjects: {
-					where: {
-						clientId,
-						projectId,
-					},
+				project: {
 					select: {
-						project: {
-							select: {
-								id: true,
-								name: true,
-								createdById: true,
-								tag: true,
-								log: {
-									where: {
-										clientId,
-										startTime: {
-											gte: gte.toISOString(),
-											lte: lte.toISOString(),
-										},
-									},
-									take,
+						id: true,
+						name: true,
+						createdById: true,
+						tag: true,
+						log: {
+							where: {
+								clientId,
+								date: {
+									gte: gte.toISOString(),
+									lte: lte.toISOString(),
 								},
 							},
+							take,
 						},
 					},
 				},
@@ -101,11 +94,9 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 				id: projectId,
 			},
 			select: {
-				clientsOnProjects: {
+				clients: {
 					where: {
-						client: {
-							userId,
-						},
+						userId,
 					},
 					include: {
 						project: {
@@ -116,13 +107,9 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 								},
 							},
 						},
-						client: {
-							include: {
-								clientsOnTags: {
-									select: {
-										tag: true,
-									},
-								},
+						clientsOnTags: {
+							select: {
+								tag: true,
 							},
 						},
 					},
@@ -162,20 +149,14 @@ export const inviteUserToProject = async (
 	projectId: string
 ) => {
 	try {
-		const existingUser = await prisma.project.findFirst({
+		const existingClient = await prisma.client.findFirst({
 			where: {
-				id: projectId,
-				clientsOnProjects: {
-					some: {
-						client: {
-							userId: deliverToUserID,
-						},
-					},
-				},
+				userId: deliverToUserID,
+				projectId,
 			},
 		});
 
-		if (existingUser) return;
+		if (existingClient) return;
 
 		return await prisma.notification.create({
 			data: {

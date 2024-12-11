@@ -37,35 +37,38 @@ model User {
 }
 
 model Client {
-  id                String              @id @default(cuid())
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  email             String
-  firstName         String
-  lastName          String
-  logs              Log[]
-  role              Role                @default(USER)
-  createdBy         User?               @relation("ClientCreatedByUser", fields: [createdById], references: [id])
-  createdById       String?
-  clientsOnProjects ClientsOnProjects[]
-  status            STATUS              @default(ACTIVE)
-  clientsOnTags     ClientsOnTags[]
-  user              User                @relation("ClientToUser", fields: [userId], references: [id], onDelete: Cascade)
-  userId            String
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  email         String
+  firstName     String
+  lastName      String
+  logs          Log[]
+  role          Role            @default(USER)
+  createdBy     User?           @relation("ClientCreatedByUser", fields: [createdById], references: [id])
+  createdById   String?
+  project       Project         @relation(fields: [projectId], references: [id])
+  projectId     String
+  status        STATUS          @default(ACTIVE)
+  clientsOnTags ClientsOnTags[]
+  user          User            @relation("ClientToUser", fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+
+  @@index([projectId, userId])
 }
 
 model Project {
-  id                String              @id @default(cuid())
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  name              String
-  description       String?
-  log               Log[]
-  clientsOnProjects ClientsOnProjects[]
-  createdById       String
-  createdBy         User                @relation(fields: [createdById], references: [id])
-  status            STATUS              @default(ACTIVE)
-  tag               Tag[]
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String?
+  log         Log[]
+  clients     Client[]
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  status      STATUS   @default(ACTIVE)
+  tag         Tag[]
 
   @@index([createdById])
 }
@@ -106,6 +109,8 @@ model Notification {
   sentById  String
   answer    Boolean?
   projectId String?
+
+  @@index([userId, projectId, sentById])
 }
 
 model Tag {
@@ -119,18 +124,6 @@ model Tag {
   clientsOnTags ClientsOnTags[]
 
   @@index([projectId])
-}
-
-model ClientsOnProjects {
-  id              String   @id @default(cuid())
-  createdAt       DateTime @default(now())
-  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
-  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId        String   @unique
-  totalLoggedTime Float    @default(0)
-
-  @@index([projectId, clientId])
 }
 
 model ClientsOnTags {

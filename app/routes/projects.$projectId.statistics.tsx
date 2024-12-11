@@ -26,9 +26,12 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { ROUTES } from "~/constants/routes";
-import { authenticateRoute } from "~/middleware/authenticateRoute";
+import {
+	authenticateAdminOrManager,
+	authenticateRoute,
+} from "~/middleware/authenticateRoute";
 import { getProjectStatistics } from "~/services/project.server";
-import { Order, ROLE } from "~/types";
+import { ROLE } from "~/types";
 import {
 	calculateDuration,
 	getEndOfCurrentWeek,
@@ -36,7 +39,9 @@ import {
 } from "~/utils/date/dateFormatter";
 import { getServerQueryParams } from "~/utils/route/getQueryParams";
 
-export type DateColumn = Client & { logs: Log[] };
+type QueryType = Client & { logs: Log[] };
+
+export type DateColumn = QueryType;
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
@@ -45,6 +50,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 		const projectId = params.projectId;
 		invariant(projectId, "Project ID not found");
+
+		await authenticateAdminOrManager(user.id, projectId);
 
 		const queryParams = getServerQueryParams(
 			["startDate", "endDate", "role"],
@@ -132,7 +139,7 @@ export default function ProjectStatistics() {
 					</SelectContent>
 				</Select>
 
-				<div className="self-end ">
+				<div className="self-end">
 					<DateRangePicker
 						initialDateFrom={startDate}
 						initialDateTo={endDate}
@@ -152,40 +159,126 @@ const generateColumns = (startDate: Date, endDate: Date) => {
 	const columns: ColumnDef<DateColumn>[] = [];
 	let currentDate = new Date(startDate);
 
+	columns.push({
+		header: "Name/Email",
+		cell: (props) => {
+			const row = props.row.original;
+			return (
+				<div className="flex flex-col gap-2 justify-center items-center">
+					<Label>
+						{row.firstName} {row.lastName} ({row.role})
+					</Label>
+					<Label className="text-gray-400">{row.email}</Label>
+				</div>
+			);
+		},
+		footer: (props) => {
+			return (
+				<div className="flex items-center justify-center">
+					<Label className="self-center">Total:</Label>
+				</div>
+			);
+		},
+	});
+
 	while (!isAfter(currentDate, endDate)) {
 		const dateForColumn = new Date(currentDate);
 
 		columns.push({
 			header: formatDate(currentDate, "MMM d"),
-			cell: (props) => cell(props.row.original, dateForColumn),
+			cell: (props) => cell(props.row.original, dateForColumn, endDate),
 		});
 
 		currentDate = addDays(currentDate, 1);
 	}
 
+	columns.push({
+		header: "Total",
+		cell: (props) => {
+			let totalAbsent = 0;
+			let totalBillable = {
+				count: 0,
+				duration: 0,
+			};
+
+			for (let i = 0; i < props.row.original.logs.length; i++) {
+				const currentLog = props.row.original.logs[i];
+
+				if (currentLog.isAbsent) {
+					totalAbsent++;
+				}
+
+				if (currentLog.isBillable) {
+					totalBillable.count++;
+					totalBillable.duration += currentLog.duration || 0;
+				}
+			}
+
+			return (
+				<div className="flex flex-col gap-1 items-start justify-start">
+					<Label>
+						Absent: <strong className="text-red-500">{totalAbsent}</strong>
+					</Label>
+					<Label>
+						Billable:{" "}
+						<strong className="text-green-300">
+							{totalBillable.count} {calculateDuration(totalBillable.duration)}{" "}
+						</strong>
+					</Label>
+				</div>
+			);
+		},
+		footer: ({ table }) => {
+			let absent = 0;
+			let billable = 0;
+
+			table.getFilteredRowModel().rows.forEach((row) => {
+				row.original.logs.forEach((log) => {
+					if (log.isBillable && log.endTime) {
+						billable += log.duration || 0;
+					}
+
+					if (log.isAbsent) {
+						absent++;
+					}
+				});
+			});
+
+			return (
+				<div className="flex flex-col gap-1">
+					<Label>
+						Absent: <strong className="text-red-500">{absent}</strong>
+					</Label>
+					<Label>
+						Billable:{" "}
+						<strong className="text-green-300">
+							{calculateDuration(billable)}
+						</strong>
+					</Label>
+				</div>
+			);
+		},
+	});
+
 	return columns;
 };
 
-const cell = (data: DateColumn, currentDate: Date) => {
-	if (!data.logs.length) {
-		return "-";
-	}
-
-	const log = data.logs.find((entry) => {
+const cell = (client: DateColumn, currentDate: Date, endDate: Date) => {
+	const log = client.logs.find((entry) => {
 		return (
 			new Date(entry.startTime).toDateString() === currentDate.toDateString()
 		);
 	});
 
-	if (log) {
-		if (log.isAbsent) {
-			return <Label className="text-red-500 ">Absent</Label>;
-		}
+	if (!log) return <Label>-</Label>;
 
-		if (log.isBillable && log.endTime) {
-			const time = calculateDuration(log.duration);
-			return <Label>{time}</Label>;
-		}
+	if (log.isAbsent) {
+		return <Label className="text-red-500 ">Absent</Label>;
+	}
+
+	if (log.isBillable && log.endTime) {
+		const time = calculateDuration(log.duration);
+		return <Label>{time}</Label>;
 	}
 
 	return <Label>-</Label>;

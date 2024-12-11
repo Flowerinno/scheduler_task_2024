@@ -1,19 +1,17 @@
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs } from "@remix-run/node";
 import { useFetcher, useOutletContext } from "@remix-run/react";
 import { Check, Ban, Delete } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { ContextType } from "~/types";
-import { HTTP_STATUS } from "~/constants/general";
-import { ERROR_MESSAGES } from "~/constants/errors";
 import {
 	answerProjectInvitation,
 	removeNotification,
 } from "~/services/user.server";
 import { formatDate } from "date-fns";
-
-type Action = "answer" | "remove";
+import { inboxSchema } from "~/schema/inboxSchema";
+import { parseWithZod } from "@conform-to/zod";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	await authenticateRoute({
@@ -22,50 +20,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const formData = await request.formData();
 
-	const action = formData.get("action") as Action;
+	const submission = parseWithZod(formData, { schema: inboxSchema });
 
-	const projectId = formData.get("projectId");
-	const notificationId = formData.get("notificationId");
-	const answer = formData.get("answer");
-
-	if (
-		!notificationId ||
-		!answer ||
-		!action ||
-		(action !== "remove" && action !== "answer")
-	) {
-		return {
-			status: HTTP_STATUS.BAD_REQUEST,
-			message: ERROR_MESSAGES.wrongPayload,
-		};
+	if (submission.status !== "success") {
+		return null;
 	}
+
+	const { notificationId, answer, action, projectId } = submission.value;
 
 	if (action === "remove") {
-		await removeNotification(notificationId as string);
+		return await removeNotification(notificationId as string);
 	} else {
-		if (!projectId)
-			return {
-				status: HTTP_STATUS.BAD_REQUEST,
-				message: ERROR_MESSAGES.wrongPayload,
-			};
-
-		try {
-			await answerProjectInvitation(
-				notificationId as string,
-				projectId as string,
-				answer === "true"
-			);
-		} catch (error) {
-			return {
-				status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-				message: ERROR_MESSAGES.generalError,
-			};
-		}
+		return await answerProjectInvitation(
+			notificationId as string,
+			projectId as string,
+			answer === "true"
+		);
 	}
-	return {
-		status: HTTP_STATUS.OK,
-		message: "Notification answered",
-	};
 };
 
 export default function Inbox() {

@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import {
 	Link,
 	useFetcher,
@@ -8,7 +8,7 @@ import {
 	useSearchParams,
 } from "@remix-run/react";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DayContentProps } from "react-day-picker";
 import invariant from "tiny-invariant";
 import { CalendarComponent } from "~/components/Calendar";
@@ -22,14 +22,17 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { Label } from "~/components/ui/label";
-import { authenticateRoute } from "~/middleware/authenticateRoute";
-import { getClientByUserId, getClientForMonth } from "~/services/client.server";
+import {
+	authenticateAdminOrManager,
+	authenticateRoute,
+} from "~/middleware/authenticateRoute";
+import { getClientByUserId, getClientInfoForMonth } from "~/services/client.server";
 import { AddActivityPopup } from "~/components/AddActivityPopup";
 
 import { ROLE } from "~/types";
 import { Button } from "~/components/ui/button";
 import { Alert } from "~/components/Alert";
-import { Log, Tag } from "@prisma/client";
+import { Log } from "@prisma/client";
 import { cn } from "~/lib/utils";
 import { Separator } from "~/components/ui/separator";
 
@@ -37,38 +40,30 @@ import {
 	calculateDuration,
 	calculateMonthLogs,
 } from "~/utils/date/dateFormatter";
-import { ROUTES } from "~/constants/routes";
 import MultipleSelector, { Option } from "~/components/ui/multiple-selector";
-import { toast } from "~/hooks/use-toast";
 
 type ExtendedOption = Option & { id: string };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const memberId = params.memberId; // client id
+	const memberId = params.memberId;
 	const projectId = params.projectId;
-
 	invariant(memberId, "Member ID is required");
 	invariant(projectId, "Project ID is required");
 
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
 	invariant(user, "User session is missing");
 
+	const admin = await authenticateAdminOrManager(user.id, projectId);
+
 	const activeClient = await getClientByUserId(user.id, projectId);
 	invariant(activeClient, "Client not found");
-
-	const role = activeClient?.clientsOnProjects[0].client.role;
-
-	if (role !== ROLE.ADMIN && role !== ROLE.MANAGER) {
-		throw redirect(ROUTES.projects);
-	}
 
 	const query = new URL(request.url).searchParams;
 
 	const queryDate = query.get("date");
-
 	const date = queryDate ? new Date(queryDate) : new Date();
 
-	const data = await getClientForMonth(memberId, projectId, 31, date);
+	const data = await getClientInfoForMonth(memberId, projectId, 31, date);
 	invariant(data?.clientInfo, "Client not found");
 	invariant(data?.totalDuration, "Client not found");
 
@@ -76,7 +71,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		clientInfo: data.clientInfo,
 		totalDuration: data.totalDuration?._sum.duration,
 		user,
-		activeClientRole: role,
+		activeClientRole: admin.role,
 	};
 };
 
@@ -97,7 +92,7 @@ export default function TeamMember() {
 	const pathName = useLocation().pathname;
 	const backRoute = pathName.replace(/\/team\/.*/, "");
 
-	const project = clientInfo.clientsOnProjects[0].project;
+	const project = clientInfo.project;
 
 	const onSelect = (date: Date) => {
 		setDate(date);
@@ -128,7 +123,7 @@ export default function TeamMember() {
 		navigate(backRoute);
 	};
 
-	const logs = clientInfo.clientsOnProjects[0].project.log;
+	const logs = clientInfo.project.log;
 
 	const customComponents = {
 		DayContent: (props: DayContentProps) => (
@@ -159,7 +154,7 @@ export default function TeamMember() {
 		};
 	});
 
-	const allTags = clientInfo.clientsOnProjects[0].project.tag.map((tag) => {
+	const allTags = clientInfo.project.tag.map((tag) => {
 		return {
 			id: tag.id,
 			label: tag.name,
@@ -248,7 +243,7 @@ export default function TeamMember() {
 					</Label>
 					Í
 					<Label className="font-bold text-2xl text-gray-400">
-						{clientInfo.clientsOnProjects[0].project.name}
+						{clientInfo.project.name}
 					</Label>
 					{isAdmin && (
 						<RoleSelector
@@ -314,7 +309,7 @@ export default function TeamMember() {
 				mode="single"
 				selected={date}
 				onSelect={isAdmin ? onSelect : voidSelection}
-				activities={clientInfo.clientsOnProjects[0].project.log}
+				activities={clientInfo.project.log}
 				customComponents={customComponents}
 			/>
 		</div>

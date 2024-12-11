@@ -87,8 +87,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 		const { duration } = await getTotalActivityDuration(user.id, projectId);
 
-		const foundClient = project.clientsOnProjects.find(({ client }) => {
-			return client.userId === user.id;
+		const foundClient = project.clients.find((c) => {
+			return c.userId === user.id;
 		});
 
 		if (!foundClient) {
@@ -97,7 +97,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 		return {
 			project,
-			client: foundClient?.client,
+			client: foundClient,
 			user,
 			totalClientDuration: duration,
 		};
@@ -332,17 +332,13 @@ export default function Project() {
 				</div>
 				<Separator />
 				<div className="flex gap-2 flex-col">
-					{project.clientsOnProjects
+					{project.clients
 						.filter((c) => {
 							const isMatch =
-								c.client.firstName
-									.toLowerCase()
-									.includes(search.toLowerCase()) ||
-								c.client.lastName
-									.toLowerCase()
-									.includes(search.toLowerCase()) ||
-								c.client.email.toLowerCase().includes(search.toLowerCase()) ||
-								c.client.clientsOnTags.some((cot) =>
+								c.firstName.toLowerCase().includes(search.toLowerCase()) ||
+								c.lastName.toLowerCase().includes(search.toLowerCase()) ||
+								c.email.toLowerCase().includes(search.toLowerCase()) ||
+								c.clientsOnTags.some((cot) =>
 									cot.tag.name.toLowerCase().includes(search.toLowerCase())
 								);
 
@@ -352,26 +348,22 @@ export default function Project() {
 						})
 						.map((c) => {
 							const to =
-								c.client.userId === user.id || client.role === "USER"
+								c.userId === user.id || client.role === "USER"
 									? "#"
-									: `${pathName}/team/${c.client.id}`;
+									: `${pathName}/team/${c.id}`;
 
-							if (
-								toogleGroup.length &&
-								!toogleGroup.includes(c.client.role as ROLE)
-							) {
+							if (toogleGroup.length && !toogleGroup.includes(c.role as ROLE)) {
 								return null;
 							}
 
-							const tags = c.client.clientsOnTags.map((cot) => cot.tag.name);
+							const tags = c.clientsOnTags.map((cot) => cot.tag.name);
 
 							return (
-								<Link key={c.client.userId} to={to}>
+								<Link key={c.userId} to={to}>
 									<Label className="text-base cursor-pointer  hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
-										{c.client.firstName} {c.client.lastName} | {c.client.email}{" "}
-										|{" "}
-										<span className={`${ROLE_COLOR_MAPPER[c.client.role]}`}>
-											{c.client.role}
+										{c.firstName} {c.lastName} | {c.email} |{" "}
+										<span className={`${ROLE_COLOR_MAPPER[c.role]}`}>
+											{c.role}
 										</span>{" "}
 										{tags.map((tag) => (
 											<Badge

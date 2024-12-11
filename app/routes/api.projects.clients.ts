@@ -1,6 +1,6 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
-import { ERROR_MESSAGES } from "~/constants/errors";
+import { HTTP_STATUS } from "~/constants/general";
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
 import {
 	attachTag,
@@ -41,9 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						);
 					}
 
-					return {
-						message: "Clients added successfully",
-					};
+					return { status: HTTP_STATUS.OK };
 				}
 			}
 		} else if (contentType?.includes("application/x-www-form-urlencoded")) {
@@ -85,12 +83,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			throw new Error("Unsupported content type");
 		}
 
-		return {
-			message: ERROR_MESSAGES.generalError,
-		};
+		return null;
 	} catch (error) {
-		return {
-			message: ERROR_MESSAGES.generalError,
-		};
+		return null;
 	}
 };

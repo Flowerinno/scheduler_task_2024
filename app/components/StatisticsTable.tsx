@@ -9,6 +9,7 @@ import {
 	Table,
 	TableBody,
 	TableCell,
+	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
@@ -82,6 +83,24 @@ export const StatisticsTable = <TData, TValue>({
 						</TableRow>
 					)}
 				</TableBody>
+				<TableFooter>
+					{table.getFooterGroups().map((footerGroup) => {
+						return (
+							<TableRow key={footerGroup.id}>
+								{footerGroup.headers.map((footer) => {
+									return (
+										<TableCell key={footer.id}>
+											{flexRender(
+												footer.column.columnDef.footer,
+												footer.getContext()
+											)}
+										</TableCell>
+									);
+								})}
+							</TableRow>
+						);
+					})}
+				</TableFooter>
 			</Table>
 		</div>
 	);

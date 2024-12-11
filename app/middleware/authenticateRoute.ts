@@ -7,7 +7,6 @@ import {
 } from "@remix-run/node";
 import { ROLE } from "~/types";
 import prisma from "~/lib/prisma";
-import invariant from "tiny-invariant";
 
 const notAuthenticatedRoutes = [ROUTES.login, ROUTES.logout, ROUTES.register];
 
@@ -28,31 +27,36 @@ export const authenticateRoute = async ({
 
 export const authenticateAdmin = async (userId: string, projectId: string) => {
 	try {
-		const adminClient = await prisma.project.findUnique({
+		const adminClient = await prisma.client.findFirstOrThrow({
 			where: {
-				id: projectId,
+				projectId,
+				userId,
+				role: ROLE.ADMIN,
 			},
-			select: {
-				clientsOnProjects: {
-					where: {
-						client: {
-							userId,
-						},
-					},
-					select: {
-						client: true,
-					},
+		});
+
+		return adminClient;
+	} catch (error) {
+		throw redirect(ROUTES.login);
+	}
+};
+
+export const authenticateAdminOrManager = async (
+	userId: string,
+	projectId: string
+) => {
+	try {
+		const client = await prisma.client.findFirstOrThrow({
+			where: {
+				projectId,
+				userId,
+				role: {
+					in: [ROLE.MANAGER, ROLE.ADMIN],
 				},
 			},
 		});
 
-		invariant(adminClient, "Client not found");
-
-		if (adminClient.clientsOnProjects[0].client.role !== ROLE.ADMIN) {
-			throw redirect(ROUTES.login);
-		}
-
-		return adminClient;
+		return client;
 	} catch (error) {
 		throw redirect(ROUTES.login);
 	}

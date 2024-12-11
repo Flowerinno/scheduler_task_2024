@@ -57,8 +57,8 @@ export function AddActivityPopup({
 	const { toast } = useToast();
 
 	const [timeState, setTimeState] = useState<Time>({
-		startTime: undefined,
-		endTime: undefined,
+		startTime: foundLog?.startTime || undefined,
+		endTime: foundLog?.endTime || undefined,
 	});
 
 	const formattedSelectedDate = formatDate(
@@ -83,7 +83,7 @@ export function AddActivityPopup({
 		onValidate: ({ formData }) => {
 			return parseWithZod(formData, { schema: logsSchema });
 		},
-		onSubmit: async (event) => {
+		onSubmit: (event) => {
 			onModalSubmit(event);
 		},
 	});
@@ -163,32 +163,45 @@ export function AddActivityPopup({
 						Note, this activity will be added to the client's calendar
 					</DialogDescription>
 				</DialogHeader>
-				<form
+				<fetcher.Form
 					id={form.id}
+					noValidate
+					method="POST"
+					action="/api/projects/logs"
 					className="flex flex-col gap-4"
-					onSubmit={onModalSubmit}
+					onSubmit={form.onSubmit}
 				>
 					<TextInput
 						name={fields.title.name}
 						placeholder="Activity title (optional)"
 						error={fields.title.errors}
+						defaultValue={foundLog?.title !== "Untitled" ? foundLog?.title : ""}
 					/>
 
 					<TextInput
 						name={fields.content.name}
 						placeholder="Activity desciption (optional)"
 						error={fields.content.errors}
+						defaultValue={foundLog?.content !== "-" ? foundLog?.content : ""}
 					/>
 
 					<div className="flex gap-2 items-center">
-						<Checkbox id={fields.isAbsent.id} name={fields.isAbsent.name} />
+						<Checkbox
+							id={fields.isAbsent.id}
+							name={fields.isAbsent.name}
+							defaultChecked={foundLog?.isAbsent ? true : false}
+						/>
 						<Label htmlFor={fields.isAbsent.id} className="cursor-pointer">
 							Mark as Absent?
 						</Label>
 					</div>
 
 					<div className="flex gap-2 items-center cursor-pointer">
-						<Checkbox id={fields.isBillable.id} name={fields.isBillable.name} />
+						<Checkbox
+							id={fields.isBillable.id}
+							name={fields.isBillable.name}
+							defaultChecked={foundLog?.isBillable ? true : false}
+						/>
 						<Label htmlFor={fields.isBillable.id} className="cursor-pointer">
 							Mark as Billable?
 						</Label>
@@ -222,7 +235,7 @@ export function AddActivityPopup({
 							</Button>
 						</DialogClose>
 					</DialogFooter>
-				</form>
+				</fetcher.Form>
 			</DialogContent>
 		</Dialog>
 	);

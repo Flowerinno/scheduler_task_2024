@@ -20,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Projects() {
-	const { projects } = useLoaderData<typeof loader>();
+	const { projects, user } = useLoaderData<typeof loader>();
 
 	if (!projects || projects?.length === 0) {
 		return (
@@ -33,27 +33,28 @@ export default function Projects() {
 	return (
 		<div className="*:text-black p-10 w-full flex flex-col gap-4">
 			{projects?.map((p, i) => {
+				const client = p.clients.find((c) => c.userId === user.id);
+
+				if (!client) return null;
+
 				return (
-					<React.Fragment key={p.project.id}>
+					<React.Fragment key={p.id}>
 						<Link
-							to={ROUTES.project + p.project.id}
+							to={ROUTES.project + p.id}
 							className="border-[1px] border-gray-400 w-full rounded-md p-4 cursor-pointer hover:bg-gray-100 transition-all duration-150 flex items-center justify-between"
 						>
 							<div className="flex flex-col gap-2">
 								<div className="flex gap-1">
-									<Label className="font-bold">{p.project.name} |</Label>
-									<Label className="font-bold">Role: {p.client.role}</Label>
+									<Label className="font-bold">{p.name} |</Label>
+									<Label className="font-bold">Role: {client.role}</Label>
 								</div>
 								<div className="flex gap-1 &:text-sm *:text-gray-400">
-									<Label className="">
-										Description: {p.project.description} |
+									<Label className="">Description: {p.description} |</Label>
+									<Label>
+										Created at: {formatDate(p.createdAt, "dd/MM/yyyy")} |
 									</Label>
 									<Label>
-										Created at: {formatDate(p.project.createdAt, "dd/MM/yyyy")}{" "}
-										|
-									</Label>
-									<Label>
-										Joined at: {formatDate(p.client.createdAt, "dd/MM/yyyy")}
+										Joined at: {formatDate(client.createdAt, "dd/MM/yyyy")}
 									</Label>
 								</div>
 							</div>
