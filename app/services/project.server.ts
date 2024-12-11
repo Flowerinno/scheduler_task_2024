@@ -355,32 +355,30 @@ export const createTag = async (projectId: string, tag: string) => {
 	}
 };
 
-export const fetchProjectStatistics = async ({
+export const getProjectStatistics = async ({
 	projectId,
 	startDate,
 	endDate,
+	role,
 }: FetchProjectStatistics) => {
-	const gte = startDate ? startDate : getStartOfCurrentWeek();
-
-	const lte = endDate ? endDate : getEndOfCurrentWeek();
-
+	console.log(role, "role?");
 	try {
-		const stats = await prisma.project.findUnique({
+		const stats = await prisma.client.findMany({
 			where: {
-				id: projectId,
-			},
-			include: {
-				log: {
-					where: {
-						startTime: {
-							gte,
-							lte,
-						},
+				clientsOnProjects: {
+					every: {
+						projectId,
 					},
 				},
-				clientsOnProjects: {
-					select: {
-						client: true,
+				...(role ? { role } : {}),
+			},
+			include: {
+				logs: {
+					where: {
+						startTime: {
+							gte: startDate,
+							lte: endDate,
+						},
 					},
 				},
 			},

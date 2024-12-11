@@ -14,8 +14,6 @@ import {
 	TableRow,
 } from "~/components/ui/table";
 
-import { Log } from "@prisma/client";
-
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
@@ -36,10 +34,16 @@ export const StatisticsTable = <TData, TValue>({
 			<Table>
 				<TableHeader>
 					{table.getHeaderGroups().map((headerGroup) => (
-						<TableRow key={headerGroup.id}>
+						<TableRow
+							className="border-[1px] border-E5E5E5 "
+							key={headerGroup.id}
+						>
 							{headerGroup.headers.map((header) => {
 								return (
-									<TableHead key={header.id}>
+									<TableHead
+										className="border-[1px] border-E5E5E5 text-center"
+										key={header.id}
+									>
 										{header.isPlaceholder
 											? null
 											: flexRender(
@@ -56,11 +60,15 @@ export const StatisticsTable = <TData, TValue>({
 					{table.getRowModel().rows?.length ? (
 						table.getRowModel().rows.map((row) => (
 							<TableRow
+								className="border-[1px] border-E5E5E5"
 								key={row.id}
 								data-state={row.getIsSelected() && "selected"}
 							>
 								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id}>
+									<TableCell
+										className="border-[1px] border-E5E5E5 text-center"
+										key={cell.id}
+									>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</TableCell>
 								))}

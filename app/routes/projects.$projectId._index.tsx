@@ -42,6 +42,7 @@ import { cn } from "~/lib/utils";
 import { Input } from "~/components/ui/input";
 import { CreateTagPopup } from "~/components/CreateTagPopup";
 import { Badge } from "~/components/ui/badge";
+import { getServerQueryParams } from "~/utils/route/getQueryParams";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -79,8 +80,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		const projectId = params.projectId;
 		invariant(projectId, "Project ID is required");
 
-		const url = new URL(request.url);
-		const search = url.searchParams.get("search") ?? undefined;
+		const { search } = getServerQueryParams(["search"], new URL(request.url));
 
 		const project = await getClientProjectById(projectId, user.id, search);
 		invariant(project, "Project not found");
@@ -155,6 +155,7 @@ export default function Project() {
 			setSearchParams(searchParams);
 			return;
 		}
+
 		setSearchParams({ search: e.target.value });
 	};
 

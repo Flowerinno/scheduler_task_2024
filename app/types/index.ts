@@ -20,4 +20,7 @@ export type FetchProjectStatistics = {
 	projectId: string;
 	startDate: Date;
 	endDate: Date;
+	role: ROLE | undefined;
 };
+
+export type Order = "desc" | "asc";
