@@ -102,7 +102,7 @@ export const UserActivityList = <T,>({ logs }: UserActivityListProps<T>) => {
 							>
 								<div className="flex justify-between flex-[0.8]">
 									<Label>
-										Project: {log.project?.name} | Role: {log.client.role} |
+										Project: {log.project?.name} | Role: {log.client.role} |{' '}
 										<strong
 											className={cn([
 												log.isBillable && "text-green-300",

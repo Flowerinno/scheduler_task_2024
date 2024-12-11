@@ -26,7 +26,10 @@ import {
 	authenticateAdminOrManager,
 	authenticateRoute,
 } from "~/middleware/authenticateRoute";
-import { getClientByUserId, getClientInfoForMonth } from "~/services/client.server";
+import {
+	getClientByUserId,
+	getClientInfoForMonth,
+} from "~/services/client.server";
 import { AddActivityPopup } from "~/components/AddActivityPopup";
 
 import { ROLE } from "~/types";
@@ -163,6 +166,8 @@ export default function TeamMember() {
 	});
 
 	const onTagChange = (tags: ExtendedOption[]) => {
+		if (activeClientRole !== ROLE.ADMIN) return;
+
 		let addedTag: ExtendedOption | undefined,
 			removedTag: ExtendedOption | undefined;
 
@@ -267,6 +272,7 @@ export default function TeamMember() {
 					}
 					defaultOptions={allTags}
 					placeholder="No tags yet..."
+					disabled={activeClientRole !== ROLE.ADMIN}
 					hideClearAllButton
 					maxSelected={5}
 					onChange={(tags) => onTagChange(tags as ExtendedOption[])}

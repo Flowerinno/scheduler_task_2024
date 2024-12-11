@@ -81,7 +81,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function ProjectStatistics() {
 	const navigate = useNavigate();
-	const fetcher = useFetcher();
 	const location = useLocation();
 	const backPath = location.pathname.split("/statistics")[0];
 
@@ -220,10 +219,11 @@ const generateColumns = (startDate: Date, endDate: Date) => {
 						Absent: <strong className="text-red-500">{totalAbsent}</strong>
 					</Label>
 					<Label>
-						Billable:{" "}
-						<strong className="text-green-300">
-							{totalBillable.count} {calculateDuration(totalBillable.duration)}{" "}
-						</strong>
+						<strong className="text-green-300">Billable: </strong>
+						{totalBillable.count}
+						{totalBillable.duration > 0
+							? ` / ${calculateDuration(totalBillable.duration)}`
+							: ""}{" "}
 					</Label>
 				</div>
 			);
@@ -273,12 +273,12 @@ const cell = (client: DateColumn, currentDate: Date, endDate: Date) => {
 	if (!log) return <Label>-</Label>;
 
 	if (log.isAbsent) {
-		return <Label className="text-red-500 ">Absent</Label>;
+		return <Label className="text-red-500 ">A</Label>;
 	}
 
 	if (log.isBillable && log.endTime) {
 		const time = calculateDuration(log.duration);
-		return <Label>{time}</Label>;
+		return <Label className="text-green-300">{time}</Label>;
 	}
 
 	return <Label>-</Label>;
