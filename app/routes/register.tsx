@@ -67,7 +67,7 @@ export default function Register() {
 			return parseWithZod(formData, { schema: registerSchema });
 		},
 	});
-	console.log(form.errors);
+
 	return (
 		<div className="flex flex-col items-center justify-center pt-14 gap-5  *:text-black">
 			<Label className="text-lg">Welcome to Scheduler</Label>

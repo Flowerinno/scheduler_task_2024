@@ -1,4 +1,5 @@
 import invariant from "tiny-invariant";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
 import { FetchProjectStatistics } from "~/types";
@@ -119,7 +120,6 @@ export const getClientProjectById = async (
 
 		return project;
 	} catch (error) {
-		console.log(error, "error");
 		return null;
 	}
 };
@@ -213,7 +213,7 @@ export const removeProject = async (projectId: string, userId: string) => {
 		});
 
 		if (!project) {
-			return;
+			return null;
 		}
 
 		await prisma.project.delete({
@@ -224,8 +224,7 @@ export const removeProject = async (projectId: string, userId: string) => {
 
 		return { message: "Project deleted" };
 	} catch (error) {
-		console.log(error);
-		return;
+		return null;
 	}
 };
 
@@ -322,7 +321,7 @@ export const createTag = async (projectId: string, tag: string) => {
 		});
 
 		if (existingTag) {
-			return { message: "Tag already exists" };
+			return { message: RESPONSE_MESSAGE.tagAlreadyExists };
 		}
 
 		return await prisma.tag.create({
@@ -332,7 +331,7 @@ export const createTag = async (projectId: string, tag: string) => {
 			},
 		});
 	} catch (error) {
-		return { message: "Could not create tag" };
+		return { message: RESPONSE_MESSAGE.couldNotCreateTag };
 	}
 };
 
@@ -341,12 +340,37 @@ export const getProjectStatistics = async ({
 	startDate,
 	endDate,
 	role,
+	search,
 }: FetchProjectStatistics) => {
 	try {
 		const test = await prisma.client.findMany({
 			where: {
 				...(role ? { role } : {}),
 				projectId,
+				...(search
+					? {
+							OR: [
+								{
+									firstName: {
+										contains: search,
+										mode: "insensitive",
+									},
+								},
+								{
+									lastName: {
+										contains: search,
+										mode: "insensitive",
+									},
+								},
+								{
+									email: {
+										contains: search,
+										mode: "insensitive",
+									},
+								},
+							],
+					  }
+					: {}),
 			},
 			include: {
 				logs: {

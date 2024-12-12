@@ -34,6 +34,7 @@ export interface DateRangePickerProps {
 	align?: "start" | "center" | "end";
 	/** Option for locale */
 	locale?: string;
+	maxSelectableCount?: number;
 }
 
 const formatDate = (date: Date, locale: string = "en-us"): string => {
@@ -86,6 +87,7 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
 	initialDateFrom = new Date(new Date().setHours(0, 0, 0, 0)),
 	initialDateTo,
 	onUpdate,
+	maxSelectableCount,
 	align = "end",
 	locale = "en-US",
 }): JSX.Element => {
@@ -367,6 +369,7 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
 									}}
 									selected={range}
 									numberOfMonths={isSmallScreen ? 1 : 2}
+									max={maxSelectableCount}
 									defaultMonth={
 										new Date(
 											new Date().setMonth(
@@ -402,6 +405,15 @@ export const DateRangePicker: FC<DateRangePickerProps> = ({
 						variant="destructive"
 					>
 						Cancel
+					</Button>
+					<Button
+						onClick={() => {
+							resetValues();
+						}}
+						className=""
+						variant="ghost"
+					>
+						Reset
 					</Button>
 					<Button
 						variant={"default"}

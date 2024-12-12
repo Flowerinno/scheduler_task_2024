@@ -12,6 +12,7 @@ import {
 import { parseWithZod } from "@conform-to/zod";
 import { User } from "@prisma/client";
 import prisma from "~/lib/prisma";
+import { LayoutList } from "lucide-react";
 
 type Action = "login" | "register";
 
@@ -71,12 +72,9 @@ export const registerUser = async (registerData: RegisterSchema) => {
 			},
 		});
 
-		console.log(newUser, "newUser");
-
 		return newUser;
 	} catch (error) {
-		console.log(error, "error");
-		return;
+		return null;
 	}
 };
 
@@ -89,19 +87,19 @@ export const loginUser = async (loginData: LoginSchema) => {
 		});
 
 		if (!user) {
-			return;
+			return null;
 		}
 
 		const isValid = await bcrypt.compare(loginData.password, user.password);
 
 		if (!isValid) {
-			return;
+			return null;
 		}
 
 		const { password, ...userWithoutPassword } = user;
 
 		return userWithoutPassword;
 	} catch (error) {
-		return;
+		return null;
 	}
 };

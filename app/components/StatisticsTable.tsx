@@ -28,6 +28,7 @@ export const StatisticsTable = <TData, TValue>({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
+		manualFiltering: true,
 	});
 
 	return (

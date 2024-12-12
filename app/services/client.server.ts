@@ -125,7 +125,7 @@ export const getClientByUserId = async (userId: string, projectId: string) => {
 
 export const updateRole = async (clientId: string, role: ROLE) => {
 	try {
-		if (!role) return;
+		if (!role) return null;
 
 		const client = await prisma.client.update({
 			where: {
@@ -156,7 +156,7 @@ export const inviteUserToProject = async (
 			},
 		});
 
-		if (existingClient) return;
+		if (existingClient) return null;
 
 		return await prisma.notification.create({
 			data: {
@@ -182,7 +182,7 @@ export const removeClientFromProject = async (clientId: string) => {
 
 		return client;
 	} catch (error) {
-		return;
+		return null;
 	}
 };
 
@@ -202,7 +202,6 @@ export const attachTag = async (
 
 		return attachedTag;
 	} catch (error) {
-		console.log(error);
 		return { message: ERROR_MESSAGES.generalError };
 	}
 };
@@ -220,10 +219,9 @@ export const detachTag = async (
 				projectId,
 			},
 		});
-		console.log(removedTags);
+
 		return removedTags;
 	} catch (error) {
-		console.log(error);
 		return { message: ERROR_MESSAGES.generalError };
 	}
 };

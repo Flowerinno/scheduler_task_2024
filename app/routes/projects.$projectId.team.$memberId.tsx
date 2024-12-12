@@ -49,8 +49,8 @@ type ExtendedOption = Option & { id: string };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId;
-	const projectId = params.projectId;
 	invariant(memberId, "Member ID is required");
+	const projectId = params.projectId;
 	invariant(projectId, "Project ID is required");
 
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
@@ -246,7 +246,6 @@ export default function TeamMember() {
 					<Label className="text-2xl">
 						{clientInfo.firstName} {clientInfo.lastName} -{" "}
 					</Label>
-					Í
 					<Label className="font-bold text-2xl text-gray-400">
 						{clientInfo.project.name}
 					</Label>

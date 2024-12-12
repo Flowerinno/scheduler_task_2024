@@ -1,6 +1,7 @@
 import { Client, Log } from "@prisma/client";
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import {
+	Link,
 	useFetcher,
 	useLoaderData,
 	useLocation,
@@ -8,13 +9,15 @@ import {
 	useSearchParams,
 } from "@remix-run/react";
 import { ColumnDef } from "@tanstack/react-table";
-import { addDays, formatDate, isAfter } from "date-fns";
+import { addDays, formatDate, isAfter, subDays } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 
 import { DateRange } from "react-day-picker";
 import invariant from "tiny-invariant";
+import { DebouncedInput } from "~/components/DebouncedInput";
 import { StatisticsTable } from "~/components/StatisticsTable";
 import { DateRangePicker } from "~/components/ui/date-range-picker";
+import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
 	Select,
@@ -43,6 +46,8 @@ type QueryType = Client & { logs: Log[] };
 
 export type DateColumn = QueryType;
 
+const MAX_SELECTABLE_COUNT = 14; //max selectable days in date range picker - 2 weeks
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
 		const user = await authenticateRoute({ request } as LoaderFunctionArgs);
@@ -54,7 +59,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		await authenticateAdminOrManager(user.id, projectId);
 
 		const queryParams = getServerQueryParams(
-			["startDate", "endDate", "role"],
+			["startDate", "endDate", "role", "search"],
 			new URL(request.url)
 		);
 
@@ -71,9 +76,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			startDate,
 			endDate,
 			role: queryParams.role as ROLE | undefined,
+			search: queryParams.search,
 		});
 
-		return { stats, startDate, endDate, role: queryParams.role };
+		return { stats, startDate, endDate, role: queryParams.role, projectId };
 	} catch (error) {
 		return redirect(ROUTES.projects);
 	}
@@ -84,7 +90,8 @@ export default function ProjectStatistics() {
 	const location = useLocation();
 	const backPath = location.pathname.split("/statistics")[0];
 
-	const { startDate, stats, endDate, role } = useLoaderData<typeof loader>();
+	const { startDate, stats, endDate, role, projectId } =
+		useLoaderData<typeof loader>();
 
 	const [searchParams, setSearchParams] = useSearchParams();
 
@@ -110,6 +117,15 @@ export default function ProjectStatistics() {
 		setSearchParams(searchParams);
 	};
 
+	const onChange = (v: string | number) => {
+		if (v === "") {
+			searchParams.delete("search");
+		} else {
+			searchParams.set("search", String(v));
+		}
+		setSearchParams(searchParams);
+	};
+
 	return (
 		<div className="w-full p-10 flex flex-col gap-12 relative">
 			<ArrowLeft
@@ -119,6 +135,15 @@ export default function ProjectStatistics() {
 
 			<h1 className="text-black text-2xl mt-5">Project Statistics</h1>
 			<div className="flex gap-2 justify-end">
+				<DebouncedInput
+					type="text"
+					className="min-h-[44px]"
+					value={searchParams.get("search") || ""}
+					onChange={(v) => onChange(v)}
+					placeholder="Filter by name / email"
+					clearButton
+				/>
+
 				<Select
 					name="role"
 					value={role}
@@ -143,38 +168,42 @@ export default function ProjectStatistics() {
 						initialDateFrom={startDate}
 						initialDateTo={endDate}
 						onUpdate={(v) => onUpdate(v)}
+						maxSelectableCount={MAX_SELECTABLE_COUNT}
 					/>
 				</div>
 			</div>
 			<StatisticsTable
-				columns={generateColumns(startDate, endDate)}
+				columns={generateColumns(startDate, endDate, projectId)}
 				data={stats}
 			/>
 		</div>
 	);
 }
 
-const generateColumns = (startDate: Date, endDate: Date) => {
+const generateColumns = (startDate: Date, endDate: Date, projectId: string) => {
 	const columns: ColumnDef<DateColumn>[] = [];
 	let currentDate = new Date(startDate);
 
 	columns.push({
-		header: "Name/Email",
+		header: "Name / Email (links to logs)",
 		cell: (props) => {
 			const row = props.row.original;
 			return (
-				<div className="flex flex-col gap-2 justify-center items-center">
-					<Label>
+				<div className="flex flex-col gap-2 justify-start items-start">
+					<Link
+						className="underline underline-offset-1 text-blue-400"
+						to={ROUTES.project + projectId + `/team/${row.id}`}
+					>
 						{row.firstName} {row.lastName} ({row.role})
-					</Label>
+					</Link>
 					<Label className="text-gray-400">{row.email}</Label>
 				</div>
 			);
 		},
 		footer: (props) => {
 			return (
-				<div className="flex items-center justify-center">
-					<Label className="self-center">Total:</Label>
+				<div className="flex items-start justify-start">
+					<Label>Total:</Label>
 				</div>
 			);
 		},
