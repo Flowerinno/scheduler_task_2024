@@ -98,7 +98,6 @@ export const getClientProjectById = async (
 							},
 						},
 					},
-					take: 10,
 				},
 				createdBy: {
 					select: {
@@ -343,7 +342,7 @@ export const getProjectStatistics = async ({
 	search,
 }: FetchProjectStatistics) => {
 	try {
-		const test = await prisma.client.findMany({
+		const stats = await prisma.client.findMany({
 			where: {
 				...(role ? { role } : {}),
 				projectId,
@@ -384,23 +383,7 @@ export const getProjectStatistics = async ({
 			},
 		});
 
-		const stats = await prisma.log.findMany({
-			where: {
-				projectId,
-				startTime: {
-					gte: startDate,
-					lte: endDate,
-				},
-				client: {
-					...(role ? { role } : {}),
-				},
-			},
-			include: {
-				client: true,
-			},
-		});
-
-		return test || [];
+		return stats || [];
 	} catch (error) {
 		return [];
 	}

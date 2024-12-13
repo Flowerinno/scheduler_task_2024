@@ -1,15 +1,15 @@
 import { Client, Log } from "@prisma/client";
+import { useState } from "react";
 import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import {
 	Link,
-	useFetcher,
 	useLoaderData,
 	useLocation,
 	useNavigate,
 	useSearchParams,
 } from "@remix-run/react";
 import { ColumnDef } from "@tanstack/react-table";
-import { addDays, formatDate, isAfter, subDays } from "date-fns";
+import { addDays, formatDate, isAfter } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 
 import { DateRange } from "react-day-picker";
@@ -17,7 +17,6 @@ import invariant from "tiny-invariant";
 import { DebouncedInput } from "~/components/DebouncedInput";
 import { StatisticsTable } from "~/components/StatisticsTable";
 import { DateRangePicker } from "~/components/ui/date-range-picker";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
 	Select,
@@ -41,6 +40,14 @@ import {
 	getStartOfCurrentWeek,
 } from "~/utils/date/dateFormatter";
 import { getServerQueryParams } from "~/utils/route/getQueryParams";
+
+type OrderBy =
+	| "absent-desc"
+	| "absent-asc"
+	| "billable-desc"
+	| "billable-asc"
+	| "empty-desc"
+	| "none";
 
 type QueryType = Client & { logs: Log[] };
 
@@ -79,7 +86,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			search: queryParams.search,
 		});
 
-		return { stats, startDate, endDate, role: queryParams.role, projectId };
+		return {
+			stats,
+			startDate,
+			endDate,
+			role: queryParams.role,
+			projectId,
+		};
 	} catch (error) {
 		return redirect(ROUTES.projects);
 	}
@@ -94,6 +107,7 @@ export default function ProjectStatistics() {
 		useLoaderData<typeof loader>();
 
 	const [searchParams, setSearchParams] = useSearchParams();
+	const [orderBy, setOrderBy] = useState<OrderBy>("none");
 
 	const onSelect = (role: ROLE & "None") => {
 		if (role === "None") {
@@ -126,6 +140,8 @@ export default function ProjectStatistics() {
 		setSearchParams(searchParams);
 	};
 
+	const data = orderByHandler(stats, orderBy);
+
 	return (
 		<div className="w-full p-10 flex flex-col gap-12 relative">
 			<ArrowLeft
@@ -143,6 +159,27 @@ export default function ProjectStatistics() {
 					placeholder="Filter by name / email"
 					clearButton
 				/>
+
+				<Select
+					name="orderBy"
+					value={orderBy}
+					onValueChange={(v) => setOrderBy(v as OrderBy)}
+				>
+					<SelectTrigger className="w-[120px] h-[44px]">
+						<SelectValue placeholder={"Order By"} />
+					</SelectTrigger>
+					<SelectContent className="min-h-[44px]">
+						<SelectGroup>
+							<SelectLabel>Order by</SelectLabel>
+							<SelectItem value={"absent-desc"}>By most absent</SelectItem>
+							<SelectItem value={"absent-asc"}>By least absent</SelectItem>
+							<SelectItem value={"billable-desc"}>By most billable</SelectItem>
+							<SelectItem value={"billable-asc"}>By least billable</SelectItem>
+							<SelectItem value={"empty-desc"}>By empty fields</SelectItem>
+							<SelectItem value={"none"}>None</SelectItem>
+						</SelectGroup>
+					</SelectContent>
+				</Select>
 
 				<Select
 					name="role"
@@ -174,7 +211,7 @@ export default function ProjectStatistics() {
 			</div>
 			<StatisticsTable
 				columns={generateColumns(startDate, endDate, projectId)}
-				data={stats}
+				data={data}
 			/>
 		</div>
 	);
@@ -311,4 +348,49 @@ const cell = (client: DateColumn, currentDate: Date, endDate: Date) => {
 	}
 
 	return <Label>-</Label>;
+};
+
+const orderByHandler = (stats: QueryType[], orderBy: OrderBy) => {
+	const data = [...stats];
+
+	switch (orderBy) {
+		case "absent-desc":
+			return data.sort((a, b) => {
+				const aAbsent = a.logs.filter((l) => l.isAbsent).length;
+				const bAbsent = b.logs.filter((l) => l.isAbsent).length;
+				return bAbsent - aAbsent;
+			});
+		case "absent-asc":
+			return data.sort((a, b) => {
+				const aAbsent = a.logs.filter((l) => l.isAbsent).length;
+				const bAbsent = b.logs.filter((l) => l.isAbsent).length;
+				return aAbsent - bAbsent;
+			});
+		case "billable-desc":
+			return data.sort((a, b) => {
+				const aBillable = a.logs.filter((l) => l.isBillable).length;
+				const bBillable = b.logs.filter((l) => l.isBillable).length;
+				return bBillable - aBillable;
+			});
+		case "billable-asc":
+			return data.sort((a, b) => {
+				const aBillable = a.logs.filter((l) => l.isBillable).length;
+				const bBillable = b.logs.filter((l) => l.isBillable).length;
+				return aBillable - bBillable;
+			});
+		case "empty-desc":
+			return data.sort((a, b) => {
+				const aEmpty = a.logs.filter(
+					(l) => !l.isBillable && !l.isAbsent
+				).length;
+				const bEmpty = b.logs.filter(
+					(l) => !l.isBillable && !l.isAbsent
+				).length;
+				return bEmpty - aEmpty;
+			});
+		case "none":
+			return data;
+		default:
+			return data;
+	}
 };

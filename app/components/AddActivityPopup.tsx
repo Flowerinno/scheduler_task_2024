@@ -83,9 +83,6 @@ export function AddActivityPopup({
 		onValidate: ({ formData }) => {
 			return parseWithZod(formData, { schema: logsSchema });
 		},
-		onSubmit: (event) => {
-			onModalSubmit(event);
-		},
 	});
 
 	const startTime = timeState.startTime || selectedDate;
@@ -163,13 +160,12 @@ export function AddActivityPopup({
 						Note, this activity will be added to the client's calendar
 					</DialogDescription>
 				</DialogHeader>
-				<fetcher.Form
+				<form
 					id={form.id}
-					noValidate
 					method="POST"
 					action="/api/projects/logs"
 					className="flex flex-col gap-4"
-					onSubmit={form.onSubmit}
+					onSubmit={onModalSubmit}
 				>
 					<TextInput
 						name={fields.title.name}
@@ -235,7 +231,7 @@ export function AddActivityPopup({
 							</Button>
 						</DialogClose>
 					</DialogFooter>
-				</fetcher.Form>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

@@ -128,8 +128,6 @@ export default function Project() {
 
 	const loggedTotalHours = calculateDuration(totalClientDuration) || 0;
 
-	const activityLink = `${ROUTES.myActivities}?projectId=${project.id}`;
-
 	const onProjectRemoval = () => {
 		const formData = new FormData();
 
@@ -203,7 +201,10 @@ export default function Project() {
 
 					<div className="flex gap-3">
 						<Button asChild variant={"default"}>
-							<Link className="text-white" to={activityLink}>
+							<Link
+								className="text-white"
+								to={`${ROUTES.myActivities}?projectId=${project.id}`}
+							>
 								View activities
 							</Link>
 						</Button>

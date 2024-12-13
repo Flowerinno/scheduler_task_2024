@@ -5,9 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
-		"dev": "remix vite:dev",
+		"dev": "node ./server.js",
 		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-		"start": "remix-serve ./build/server/index.js",
+		"start:dev": "remix-serve ./build/server/server.js",
+		"start": "remix-serve ./build/server/server.js",
 		"typecheck": "tsc",
 		"seed": "npx prisma db seed"
 	},
@@ -46,6 +47,7 @@
 		"compression": "^1.7.5",
 		"date-fns": "^3.6.0",
 		"express": "^4.21.1",
+		"express-rate-limit": "^7.4.1",
 		"isbot": "^4.1.0",
 		"lucide-react": "^0.460.0",
 		"morgan": "^1.10.0",

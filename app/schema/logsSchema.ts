@@ -43,11 +43,6 @@ export const logsSchema = z
 				});
 			}
 		}
-
-		if (data.isBillable) {
-			if (!data.startTime) {
-			}
-		}
 	});
 
 export type LogsSchema = z.infer<typeof logsSchema>;

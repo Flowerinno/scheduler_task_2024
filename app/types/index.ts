@@ -24,4 +24,4 @@ export type FetchProjectStatistics = {
 	search: string | undefined;
 };
 
-export type Order = "desc" | "asc";
+export type OrderBy = "desc" | "asc";

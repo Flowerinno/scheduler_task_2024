@@ -12,7 +12,6 @@ import {
 import { parseWithZod } from "@conform-to/zod";
 import { User } from "@prisma/client";
 import prisma from "~/lib/prisma";
-import { LayoutList } from "lucide-react";
 
 type Action = "login" | "register";
 
