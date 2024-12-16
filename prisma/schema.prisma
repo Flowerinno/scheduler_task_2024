@@ -94,7 +94,7 @@ model Log {
   projectId    String?
   version      Int       @default(1)
 
-  @@index([clientId, projectId, createdAt, modifiedById, date])
+  @@index([clientId, projectId, date])
 }
 
 model Notification {
