@@ -228,6 +228,7 @@ export const removeProject = async (projectId: string, userId: string) => {
 };
 
 export const createLog = async (data: LogsSchema) => {
+	//versioning to prevent race conditions, default v=1
 	try {
 		const duration = data.endTime.getTime() - data.startTime.getTime();
 
@@ -243,9 +244,9 @@ export const createLog = async (data: LogsSchema) => {
 					version,
 					date: onDate,
 				},
-			});
+			}); // look for a log with the same version and date
 
-			invariant(conflictingRecord === null, "Conflicting log found");
+			invariant(conflictingRecord === null, "Conflicting log found"); // if found, throw an error
 
 			return prisma.log.create({
 				data: {
@@ -268,6 +269,7 @@ export const updateLog = async (data: LogsSchema) => {
 
 		return await prisma.$transaction(async (prisma) => {
 			return prisma.log.update({
+				// wont update if not found 
 				where: {
 					id: logId,
 					version,
