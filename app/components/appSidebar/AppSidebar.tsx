@@ -21,7 +21,7 @@ import {
 	MenuIcon,
 	LogOutIcon,
 } from "lucide-react";
-import { Form, Link, useNavigate } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 import { AuthUser } from "~/services/auth.server";
 
 const items = [
@@ -60,7 +60,6 @@ export function AppSidebar({
 	onModalOpenChange,
 	notificationsCount,
 }: AppSidebarProps) {
-	const navigate = useNavigate();
 	const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
 
 	if (isMobile && !openMobile) {

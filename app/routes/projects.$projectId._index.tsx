@@ -43,6 +43,8 @@ import { Input } from "~/components/ui/input";
 import { CreateTagPopup } from "~/components/CreateTagPopup";
 import { Badge } from "~/components/ui/badge";
 import { getServerQueryParams } from "~/utils/route/getQueryParams";
+import { Client } from "@prisma/client";
+import { DebouncedInput } from "~/components/DebouncedInput";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -147,14 +149,14 @@ export default function Project() {
 		setToogleGroup(newToogleGroup);
 	};
 
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.value === "") {
+	const handleSearch = (v: string | number) => {
+		if (v === "") {
 			searchParams.delete("search");
 			setSearchParams(searchParams);
 			return;
 		}
 
-		setSearchParams({ search: e.target.value });
+		setSearchParams({ search: String(v) });
 	};
 
 	return (
@@ -239,13 +241,15 @@ export default function Project() {
 									Invite members
 								</Button>
 
-								<Button
-									className="text-white"
-									variant={"destructive"}
-									onClick={() => setIsAlertOpen(true)}
-								>
-									Delete project
-								</Button>
+								{project.createdBy.id === client.userId && (
+									<Button
+										className="text-white"
+										variant={"destructive"}
+										onClick={() => setIsAlertOpen(true)}
+									>
+										Delete project
+									</Button>
+								)}
 							</>
 						)}
 					</div>
@@ -323,8 +327,8 @@ export default function Project() {
 					</ToggleGroup>
 					<Separator orientation="vertical" />
 
-					<Input
-						defaultValue={search}
+					<DebouncedInput
+						value={search}
 						name="search"
 						onChange={(e) => handleSearch(e)}
 						className="flex-1 focus:no-underline"

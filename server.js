@@ -13,8 +13,6 @@ const viteDevServer =
 				})
 		  );
 
-console.log(viteDevServer, "viteDevServer");
-
 const app = express();
 
 const limiter = rateLimit({

@@ -50,7 +50,7 @@ type ExtendedOption = Option & { id: string };
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId;
 	invariant(memberId, "Member ID is required");
-	
+
 	const projectId = params.projectId;
 	invariant(projectId, "Project ID is required");
 

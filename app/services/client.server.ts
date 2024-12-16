@@ -33,6 +33,7 @@ export const getClientInfoForMonth = async (
 				role: true,
 				createdBy: {
 					select: {
+						id: true,
 						firstName: true,
 						lastName: true,
 						email: true,
