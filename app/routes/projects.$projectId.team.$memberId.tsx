@@ -26,10 +26,7 @@ import {
 	authenticateAdminOrManager,
 	authenticateRoute,
 } from "~/middleware/authenticateRoute";
-import {
-	getClientByUserId,
-	getClientInfoForMonth,
-} from "~/services/client.server";
+import { getClientInfoForMonth } from "~/services/client.server";
 import { AddActivityPopup } from "~/components/AddActivityPopup";
 
 import { ROLE } from "~/types";
@@ -57,14 +54,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
 	invariant(user, "User session is missing");
 
-	const admin = await authenticateAdminOrManager(user.id, projectId);
-
-	const activeClient = await getClientByUserId(user.id, projectId);
-	invariant(activeClient, "Client not found");
+	const activeClient = await authenticateAdminOrManager(user.id, projectId);
 
 	const query = new URL(request.url).searchParams;
-
 	const queryDate = query.get("date");
+
 	const date = queryDate ? new Date(queryDate) : new Date();
 
 	const data = await getClientInfoForMonth(memberId, projectId, 31, date);
@@ -75,7 +69,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		clientInfo: data.clientInfo,
 		totalDuration: data.totalDuration?._sum.duration,
 		user,
-		activeClientRole: admin.role,
+		activeClientRole: activeClient.role,
 	};
 };
 

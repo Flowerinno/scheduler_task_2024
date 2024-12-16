@@ -88,42 +88,6 @@ export const getClientInfoForMonth = async (
 	}
 };
 
-export const getClientByUserId = async (userId: string, projectId: string) => {
-	try {
-		const client = await prisma.project.findUnique({
-			where: {
-				id: projectId,
-			},
-			select: {
-				clients: {
-					where: {
-						userId,
-					},
-					include: {
-						project: {
-							select: {
-								log: {
-									where: {},
-									take: 31,
-								},
-							},
-						},
-						clientsOnTags: {
-							select: {
-								tag: true,
-							},
-						},
-					},
-				},
-			},
-		});
-
-		return client;
-	} catch (error) {
-		return null;
-	}
-};
-
 export const updateRole = async (clientId: string, role: ROLE) => {
 	try {
 		if (!role) return null;
