@@ -78,6 +78,17 @@ export const answerProjectInvitation = async (
 		});
 
 		if (answer === true) {
+			const isClientOnProject = await prisma.client.findFirst({
+				where: {
+					projectId,
+					email: answerFromUser.user.email,
+				},
+			});
+
+			if (isClientOnProject) {
+				return { status: HTTP_STATUS.OK };
+			}
+
 			await prisma.client.create({
 				data: {
 					email: answerFromUser.user.email,

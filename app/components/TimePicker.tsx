@@ -10,7 +10,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "~/components/ui/popover";
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
+import { ScrollArea } from "~/components/ui/scroll-area";
 
 export type TimeType = "hour" | "minute";
 
@@ -27,7 +27,13 @@ export function TimePicker(props: TimePickerProps) {
 	const [date, setDate] = React.useState<Date>(props.date);
 	const [isOpen, setIsOpen] = React.useState(false);
 
+	const isStartTime = props.type === "startTime";
+
 	const hours = Array.from({ length: 24 }, (_, i) => i);
+
+	if (isStartTime) {
+		hours.reverse();
+	}
 
 	const handleTimeChange = (type: "hour" | "minute", value: string) => {
 		if (date) {
@@ -81,7 +87,6 @@ export function TimePicker(props: TimePickerProps) {
 							);
 						})}
 					</div>
-					{/* <ScrollBar orientation="horizontal" className="sm:hidden" /> */}
 				</ScrollArea>
 				<ScrollArea className="w-64 sm:w-auto">
 					<div className="flex sm:flex-col p-2">

@@ -17,6 +17,14 @@ export const logsSchema = z
 		version: z.number().default(1),
 	})
 	.superRefine((data, ctx) => {
+		if (!data.isAbsent && !data.isBillable) {
+			ctx.addIssue({
+				message: "Please select either absent or billable.",
+				path: ["isBillable"],
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
 		if (!data.isAbsent || data.isBillable) {
 			if (compareAsc(data.endTime, data.startTime) === 0) {
 				ctx.addIssue({

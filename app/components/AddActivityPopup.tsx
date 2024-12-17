@@ -39,8 +39,8 @@ type AddActivityPopup = {
 };
 
 type Time = {
-	startTime: Date | undefined;
-	endTime: Date | undefined;
+	startTime: Date;
+	endTime: Date;
 };
 
 export function AddActivityPopup({
@@ -57,13 +57,13 @@ export function AddActivityPopup({
 	const { toast } = useToast();
 
 	const [timeState, setTimeState] = useState<Time>({
-		startTime: foundLog?.startTime || undefined,
-		endTime: foundLog?.endTime || undefined,
+		startTime: foundLog?.startTime || selectedDate,
+		endTime: foundLog?.endTime || selectedDate,
 	});
 
 	const formattedSelectedDate = formatDate(
 		selectedDate ? toDate(selectedDate) : toDate(new Date()),
-		"yyyy-MM-dd"
+		"dd/MM/yyyy"
 	);
 
 	const [form, fields] = useForm({
@@ -85,8 +85,8 @@ export function AddActivityPopup({
 		},
 	});
 
-	const startTime = timeState.startTime || selectedDate;
-	const endTime = timeState.endTime || selectedDate;
+	const startTime = timeState.startTime;
+	const endTime = timeState.endTime;
 
 	const onModalSubmit = useCallback(
 		(event: React.FormEvent<HTMLFormElement>) => {
@@ -203,16 +203,16 @@ export function AddActivityPopup({
 						</Label>
 					</div>
 
-					<div className="flex  gap-2">
+					<div className="flex gap-2">
 						<TimePicker
 							title="Start time"
-							date={startTime}
+							date={timeState.startTime}
 							onDateChange={handleTimeChange}
 							type="startTime"
 						/>
 						<TimePicker
 							title="End time"
-							date={endTime}
+							date={timeState.endTime}
 							onDateChange={handleTimeChange}
 							type="endTime"
 						/>

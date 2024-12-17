@@ -19,10 +19,6 @@ export const calculateMonthLogs = (logs: Log[], date: Date) => {
 	return total;
 };
 
-export const calculateTotalLogs = (logs: Log[]) => {
-	return accumulateHours(logs);
-};
-
 export const accumulateHours = (logs: Log[]) => {
 	const total = logs.reduce((acc, log) => {
 		if (!log.isAbsent && log.endTime) {
@@ -45,11 +41,10 @@ export const calculateDuration = (duration: number | undefined | null) => {
 	const hours = Math.floor(duration / (1000 * 60 * 60));
 	const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
 
-	const formattedDuration = `${String(hours).padStart(2, "0")}:${String(
-		minutes
-	).padStart(2, "0")}`;
-
-	return formattedDuration;
+	return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+		2,
+		"0"
+	)}`;
 };
 
 export const getStartOfTheDay = (date: Date) => {

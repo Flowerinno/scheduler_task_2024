@@ -34,6 +34,7 @@ export default function Logout() {
 					</Button>
 					<Button
 						variant={"ghost"}
+						type="button"
 						className="border-2 border-black dark:border-white text-sm  p-1 rounded-md w-24 cursor-pointer hover:bg-black hover:text-white"
 						onClick={() => navigate(ROUTES.projects)}
 					>

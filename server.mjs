@@ -53,7 +53,7 @@ app.all(
 			? await viteDevServer.ssrLoadModule("virtual:remix/server-build")
 			: // @ts-expect-error
 			  // eslint-disable-next-line import/no-unresolved
-			  await import("../build/server/remix.js"),
+			  await import("../build/server/server.js"),
 		mode: process.env.NODE_ENV,
 	})
 );

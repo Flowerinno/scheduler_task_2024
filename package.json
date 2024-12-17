@@ -5,10 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"build": "remix vite:build",
-		"dev": "node ./server.js",
+		"dev": "node ./server.mjs",
 		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-		"start:dev": "remix-serve ./build/server/server.js",
-		"start": "remix-serve ./build/server/server.js",
+		"start:dev": "node ./server.mjs",
 		"typecheck": "tsc",
 		"seed": "npx prisma db seed"
 	},
