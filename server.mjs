@@ -3,6 +3,9 @@ import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import { createRequestHandler } from "@remix-run/express";
+import { installGlobals } from "@remix-run/node";
+
+installGlobals();
 
 const viteDevServer =
 	process.env.NODE_ENV === "production"
@@ -12,6 +15,8 @@ const viteDevServer =
 					server: { middlewareMode: true },
 				})
 		  );
+
+console.log(`Running in ${process.env.NODE_ENV ?? "development"} mode`);
 
 const app = express();
 
@@ -50,13 +55,12 @@ app.all(
 	"*",
 	createRequestHandler({
 		build: viteDevServer
-			? await viteDevServer.ssrLoadModule("virtual:remix/server-build")
-			: // @ts-expect-error
-			  // eslint-disable-next-line import/no-unresolved
-			  await import("../build/server/server.js"),
+			? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
+			: await import("./build/server/server.js"),
 		mode: process.env.NODE_ENV,
 	})
 );
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {

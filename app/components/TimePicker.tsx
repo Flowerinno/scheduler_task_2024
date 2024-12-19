@@ -45,6 +45,7 @@ export function TimePicker(props: TimePickerProps) {
 			}
 			setDate(newDate);
 			props.onDateChange(props.type, newDate);
+			setIsOpen(false);
 		}
 	};
 

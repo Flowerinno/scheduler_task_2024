@@ -110,6 +110,7 @@ export function CreateProjectModal({
 						placeholder="Project name"
 						error={fields.name.errors}
 						required
+						minLength={4}
 					/>
 
 					<TextInput

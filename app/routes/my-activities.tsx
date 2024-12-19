@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { Label } from "~/components/ui/label";
@@ -9,7 +9,14 @@ import {
 	getProjectActivitiesById,
 } from "~/services/project.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "My Activities | Scheduler" },
+		{ name: "description", content: "Projects Activities" },
+	];
+};
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
 
 	invariant(user, "User session is missing");

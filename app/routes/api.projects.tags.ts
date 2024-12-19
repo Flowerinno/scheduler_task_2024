@@ -29,9 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		const admin = await authenticateAdmin(user.id, projectId);
 		invariant(admin, "User is not an admin");
 
-		const createdTag = await createTag(projectId, tag);
-
-		return createdTag;
+		return await createTag(projectId, tag);
 	} catch (error) {
 		return { message: ERROR_MESSAGES.generalError };
 	}

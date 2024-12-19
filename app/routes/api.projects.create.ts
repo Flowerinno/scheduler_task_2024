@@ -42,6 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			},
 		});
 		invariant(user, "User not found");
+
 		const project = await prisma.project.create({
 			data: {
 				name: data.name,
@@ -84,13 +85,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 
 		return {
-			message: "Project created",
-			status: HTTP_STATUS.CREATED,
+			status: HTTP_STATUS.OK,
 		};
 	} catch (error) {
-		return {
-			message: ERROR_MESSAGES.generalError,
-			status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-		};
+		return null;
 	}
 };

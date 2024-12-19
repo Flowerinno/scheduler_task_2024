@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import {
 	Link,
 	useFetcher,
@@ -44,6 +44,8 @@ import MultipleSelector, { Option } from "~/components/ui/multiple-selector";
 
 type ExtendedOption = Option & { id: string };
 
+const voidSelection = (date: Date) => {};
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const memberId = params.memberId;
 	invariant(memberId, "Member ID is required");
@@ -73,6 +75,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	};
 };
 
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+	const fullName = `${data?.clientInfo.firstName} ${data?.clientInfo.lastName}`;
+	return [
+		{ title: `${fullName} | Scheduler` },
+		{ name: "description", content: `Manage ${fullName}'s work time` },
+	];
+};
+
 export default function TeamMember() {
 	const { clientInfo, totalDuration, activeClientRole, user } =
 		useLoaderData<typeof loader>();
@@ -91,13 +101,12 @@ export default function TeamMember() {
 	const backRoute = pathName.replace(/\/team\/.*/, "");
 
 	const project = clientInfo.project;
+	const logs = clientInfo.project.log;
 
 	const onSelect = (date: Date) => {
 		setDate(date);
 		setIsModalOpen(true);
 	};
-
-	const voidSelection = (date: Date) => {};
 
 	const isAdmin = activeClientRole === ROLE.ADMIN;
 
@@ -121,26 +130,19 @@ export default function TeamMember() {
 		navigate(backRoute);
 	};
 
-	const logs = clientInfo.project.log;
-
 	const customComponents = {
 		DayContent: (props: DayContentProps) => (
 			<DayContent {...props} logs={logs} />
 		),
 	};
 
-	const loggedMonthHours = calculateMonthLogs(logs, shownDate);
-
-	const loggedTotalHours = calculateDuration(totalDuration);
-
-	let foundLog;
-
-	if (date) {
-		foundLog = logs.find(
-			(log) =>
-				new Date(log.startTime).toDateString() === new Date(date).toDateString()
-		);
-	}
+	let foundLog = date
+		? logs?.find(
+				(log) =>
+					new Date(log.startTime).toDateString() ===
+					new Date(date).toDateString()
+		  )
+		: undefined;
 
 	const absentDaysCount = logs.filter((log) => log.isAbsent).length;
 
@@ -182,25 +184,17 @@ export default function TeamMember() {
 		if (addedTag) {
 			formData.append("action", "addTag");
 			formData.append("tagId", addedTag.id);
-			fetcher.submit(formData, {
-				method: "POST",
-				action: "/api/projects/clients",
-			});
 		}
 
 		if (removedTag) {
 			formData.append("action", "removeTag");
 			formData.append("tagId", removedTag.id);
-
-			fetcher.submit(formData, {
-				method: "POST",
-				action: "/api/projects/clients",
-			});
-
-			if (tags.length === 0) {
-				clientTags = [];
-			}
 		}
+
+		fetcher.submit(formData, {
+			method: "POST",
+			action: "/api/projects/clients",
+		});
 	};
 
 	const isSubmitting =
@@ -287,7 +281,7 @@ export default function TeamMember() {
 						<Label className="text-xl font-[400]">Logged Current Month</Label>
 						<br />
 						<span className="text-black text-4xl self-center">
-							{loggedMonthHours}:00 / h
+							{calculateMonthLogs(logs, shownDate)}:00 / h
 						</span>
 						<span className="text-gray-500 text-xs self-center">
 							{absentDaysCount} day{absentDaysCount > 1 && "s"} absent
@@ -298,7 +292,7 @@ export default function TeamMember() {
 						<Label className="text-xl font-[400">Logged Total</Label>
 						<br />
 						<span className="text-black text-4xl self-center">
-							{loggedTotalHours || 0} / h
+							{calculateDuration(totalDuration) || 0} / h
 						</span>
 					</div>
 				</div>

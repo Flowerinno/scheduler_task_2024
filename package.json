@@ -7,7 +7,7 @@
 		"build": "remix vite:build",
 		"dev": "node ./server.mjs",
 		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-		"start:dev": "node ./server.mjs",
+		"start:dev": "cross-env NODE_ENV=production node server.mjs",
 		"typecheck": "tsc",
 		"seed": "npx prisma db seed"
 	},
@@ -44,7 +44,9 @@
 		"clsx": "^2.1.1",
 		"cmdk": "^1.0.0",
 		"compression": "^1.7.5",
+		"cross-env": "^7.0.3",
 		"date-fns": "^3.6.0",
+		"dotenv": "^16.4.7",
 		"express": "^4.21.1",
 		"express-rate-limit": "^7.4.1",
 		"isbot": "^4.1.0",

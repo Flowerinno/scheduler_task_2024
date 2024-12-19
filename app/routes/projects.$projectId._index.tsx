@@ -1,6 +1,7 @@
 import {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
+	MetaFunction,
 	redirect,
 } from "@remix-run/node";
 import invariant from "tiny-invariant";
@@ -39,11 +40,9 @@ import {
 
 import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
-import { Input } from "~/components/ui/input";
 import { CreateTagPopup } from "~/components/CreateTagPopup";
 import { Badge } from "~/components/ui/badge";
 import { getServerQueryParams } from "~/utils/route/getQueryParams";
-import { Client } from "@prisma/client";
 import { DebouncedInput } from "~/components/DebouncedInput";
 
 const ROLE_COLOR_MAPPER = {
@@ -58,6 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 		const projectId = formData.get("projectId");
 		invariant(projectId, "Project ID is required");
+
 		const userId = formData.get("userId");
 		invariant(userId, "User ID is required");
 
@@ -106,6 +106,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	} catch (error) {
 		return redirect(ROUTES.projects);
 	}
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+	return [
+		{ title: `${data?.project.name} project | Scheduler` },
+		{ name: "description", content: `${data?.project.name} project overview` },
+	];
 };
 
 export default function Project() {

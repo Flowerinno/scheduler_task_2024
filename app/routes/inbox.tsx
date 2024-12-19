@@ -1,4 +1,4 @@
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useFetcher, useOutletContext } from "@remix-run/react";
 import { Check, Ban, Delete } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -37,6 +37,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			answer === "true"
 		);
 	}
+};
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Inbox | Scheduler" },
+		{ name: "description", content: "Your Notifications" },
+	];
 };
 
 export default function Inbox() {

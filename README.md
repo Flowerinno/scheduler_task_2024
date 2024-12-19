@@ -2,7 +2,8 @@
 
 - Kononov Aleksandr 2024 js task
 
-* Building and running in production docker:
+* Building and running docker in production:
+
 Build image:
 ```docker build -f./Dockerfile . -t remix/run```
 

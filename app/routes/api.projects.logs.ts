@@ -26,8 +26,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			return await createLog(submission.value);
 		}
 	} catch (error) {
-		return {
-			message: ERROR_MESSAGES.generalError,
-		};
+		return { message: ERROR_MESSAGES.generalError };
 	}
 };

@@ -8,12 +8,15 @@ import { getStartOfTheDay } from "~/utils/date/dateFormatter";
 export const getUserProjects = async (userId: string) => {
 	try {
 		const projects = await prisma.project.findMany({
-			include: {
+			where: {
 				clients: {
-					where: {
+					some: {
 						userId,
 					},
 				},
+			},
+			include: {
+				clients: true,
 			},
 		});
 
@@ -205,9 +208,7 @@ export const removeProject = async (projectId: string, userId: string) => {
 		const project = await prisma.project.findFirst({
 			where: {
 				id: projectId,
-				createdBy: {
-					id: userId,
-				},
+				createdById: userId,
 			},
 		});
 
@@ -215,13 +216,11 @@ export const removeProject = async (projectId: string, userId: string) => {
 			return null;
 		}
 
-		await prisma.project.delete({
+		return await prisma.project.delete({
 			where: {
 				id: projectId,
 			},
 		});
-
-		return { message: "Project deleted" };
 	} catch (error) {
 		return null;
 	}
@@ -269,7 +268,7 @@ export const updateLog = async (data: LogsSchema) => {
 
 		return await prisma.$transaction(async (prisma) => {
 			return prisma.log.update({
-				// wont update if not found 
+				// wont update if not found
 				where: {
 					id: logId,
 					version,

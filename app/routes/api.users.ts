@@ -2,7 +2,7 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { getUsersByEmail } from "~/services/user.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { searchParams } = new URL(request.url);
 	const email = searchParams.get("email");
 

@@ -1,6 +1,6 @@
 import { Client, Log } from "@prisma/client";
 import { useState } from "react";
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import {
 	Link,
 	useLoaderData,
@@ -53,7 +53,7 @@ type QueryType = Client & { logs: Log[] };
 
 export type DateColumn = QueryType;
 
-const MAX_SELECTABLE_COUNT = 14; //max selectable days in date range picker - 2 weeks
+const MAX_SELECTABLE_COUNT = 14; //max selectable days in date range picker
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
@@ -98,6 +98,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	}
 };
 
+export const meta: MetaFunction = () => {
+	return [
+		{ title: `Statistics | Scheduler` },
+		{ name: "description", content: `Project Statistics` },
+	];
+};
+
 export default function ProjectStatistics() {
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -107,6 +114,7 @@ export default function ProjectStatistics() {
 		useLoaderData<typeof loader>();
 
 	const [searchParams, setSearchParams] = useSearchParams();
+
 	const [orderBy, setOrderBy] = useState<OrderBy>("none");
 
 	const onSelect = (role: ROLE & "None") => {
@@ -120,8 +128,9 @@ export default function ProjectStatistics() {
 	};
 
 	const onUpdate = (props: { range: DateRange }) => {
-		const { range } = props;
-		const { from, to } = range;
+		const {
+			range: { from, to },
+		} = props;
 
 		if (!from || !to) return;
 

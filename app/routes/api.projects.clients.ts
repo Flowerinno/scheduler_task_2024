@@ -66,6 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			if (action === "updateRole") {
 				return await updateRole(clientId, formData.get("role") as ROLE);
 			}
+
 			if (action === "deleteClient") {
 				return removeClientFromProject(clientId);
 			}

@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { ROUTES } from "~/constants/routes";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { getUserProjects } from "~/services/project.server";
@@ -17,6 +17,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const projects = await getUserProjects(user.id);
 
 	return { projects, user };
+};
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: `Your Projects | Scheduler` },
+		{ name: "description", content: "Your Active Projects" },
+	];
 };
 
 export default function Projects() {

@@ -1,5 +1,5 @@
 import { Log } from "@prisma/client";
-import { CustomComponents, DateRange } from "react-day-picker";
+import { CustomComponents } from "react-day-picker";
 import { Calendar, CalendarProps } from "~/components/ui/calendar";
 import { cn } from "~/lib/utils";
 

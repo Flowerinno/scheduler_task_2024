@@ -12,7 +12,7 @@ import { TextInput } from "~/components/TextInput";
 import { ERROR_MESSAGES } from "~/constants/errors";
 import { commitSession, getSession } from "~/services/session.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticator.isAuthenticated(request);
 
 	if (user) {

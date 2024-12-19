@@ -1,4 +1,4 @@
-import { useForm } from "@conform-to/react";
+import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Label } from "~/components/ui/label";
 import { useActionData, Form } from "@remix-run/react";
@@ -12,18 +12,11 @@ import {
 	redirect,
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
+	MetaFunction,
 } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
 import { commitSession, getSession } from "~/services/session.server";
 import { ERROR_MESSAGES } from "~/constants/errors";
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await authenticator.isAuthenticated(request);
-
-	if (user) redirect(ROUTES.projects);
-
-	return { message: "Register action" };
-};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.clone().formData();
@@ -51,6 +44,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect(ROUTES.projects, { headers });
 };
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const user = await authenticator.isAuthenticated(request);
+
+	if (user) redirect(ROUTES.projects);
+
+	return { message: "Register action" };
+};
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: `Register | Scheduler` },
+		{ name: "description", content: `Create an account on Scheduler` },
+	];
+};
+
 export default function Register() {
 	const lastResult = useActionData<typeof action>();
 
@@ -76,6 +84,7 @@ export default function Register() {
 			<Form
 				method="post"
 				className="w-full [&>div]:w-7/12 border-black flex flex-col items-center justify-center gap-4"
+				{...getFormProps(form)}
 			>
 				<TextInput
 					name="email"
