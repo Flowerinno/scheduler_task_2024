@@ -7,6 +7,7 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useLocation,
+	useRouteLoaderData,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { data } from "@remix-run/node";
@@ -67,7 +68,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-	const data = useLoaderData<typeof loader>();
+	const data = useRouteLoaderData<typeof loader>("root");
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);

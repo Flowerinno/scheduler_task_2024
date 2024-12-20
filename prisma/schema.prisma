@@ -86,11 +86,11 @@ model Log {
   isBillable   Boolean   @default(false)
   isApproved   Boolean   @default(false)
   isAbsent     Boolean   @default(false)
-  modifiedBy   User?     @relation(fields: [modifiedById], references: [id])
+  modifiedBy   User?     @relation(fields: [modifiedById], references: [id], onDelete: SetNull)
   modifiedById String?
-  client       Client    @relation(fields: [clientId], references: [id])
+  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId     String
-  project      Project?  @relation(fields: [projectId], references: [id])
+  project      Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectId    String?
   version      Int       @default(1)
 

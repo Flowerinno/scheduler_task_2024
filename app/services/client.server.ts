@@ -169,10 +169,10 @@ export const removeClientFromProject = async (
 		});
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.clientRemoved);
-
-		return await nullableResponseWithMessage(session);
 	} catch (error) {
+		console.log(error);
 		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
+	} finally {
 		return await nullableResponseWithMessage(session);
 	}
 };

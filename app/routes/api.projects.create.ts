@@ -1,6 +1,5 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import { ERROR_MESSAGES } from "~/constants/errors";
-import { HTTP_STATUS } from "~/constants/general";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { createProjectSchema } from "~/schema/projectSchema";
 import prisma from "~/lib/prisma";
