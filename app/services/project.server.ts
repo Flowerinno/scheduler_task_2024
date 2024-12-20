@@ -235,6 +235,7 @@ export const removeProject = async (
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.deleted);
 	} catch (error) {
+		console.log(error);
 		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
 	}
 };
