@@ -7,7 +7,7 @@
 		"build": "remix vite:build",
 		"dev": "node ./server.mjs",
 		"lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-		"start:dev": "cross-env NODE_ENV=production node server.mjs",
+		"start": "cross-env NODE_ENV=production node server.mjs",
 		"typecheck": "tsc",
 		"seed": "npx prisma db seed"
 	},

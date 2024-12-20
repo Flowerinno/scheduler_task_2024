@@ -1,4 +1,4 @@
-import { data, Session } from "@remix-run/node";
+import { Session } from "@remix-run/node";
 import { ERROR_MESSAGES } from "~/constants/errors";
 import { RESPONSE_MESSAGE } from "~/constants/messages";
 import prisma from "~/lib/prisma";
@@ -7,7 +7,6 @@ import {
 	nullableResponseWithMessage,
 	setErrorMessage,
 	setSuccessMessage,
-	setToastMessageCookie,
 } from "~/utils/message/message.server";
 
 export const getClientInfoForMonth = async (
@@ -170,7 +169,6 @@ export const removeClientFromProject = async (
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.clientRemoved);
 	} catch (error) {
-		console.log(error);
 		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
 	} finally {
 		return await nullableResponseWithMessage(session);

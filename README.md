@@ -1,6 +1,6 @@
 # `Scheduler`
 
-- Kononov Aleksandr 2024 js task
+- Kononov Aleksandr 2024
 
 * Building and running docker in production:
 
