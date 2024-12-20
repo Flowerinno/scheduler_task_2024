@@ -13,8 +13,6 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { CreateTagSchema, createTagSchema } from "~/schema/projectSchema";
 import { TextInput } from "./TextInput";
-import { toast } from "~/hooks/use-toast";
-import { useEffect } from "react";
 
 type CreateTagPopupProps = {
 	isModalOpen: boolean;
@@ -40,21 +38,6 @@ export const CreateTagPopup = ({
 			return parseWithZod(formData, { schema: createTagSchema });
 		},
 	});
-
-	useEffect(() => {
-		if (fetcher.data) {
-			if (fetcher.data?.message) {
-				toast({
-					title: fetcher.data.message,
-					variant: "destructive",
-				});
-			} else {
-				toast({
-					title: "Tag created successfully",
-				});
-			}
-		}
-	}, [fetcher.data]);
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={onModalOpenChange}>

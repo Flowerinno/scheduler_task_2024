@@ -12,8 +12,11 @@ import {
 import { formatDate } from "date-fns";
 import { inboxSchema } from "~/schema/inboxSchema";
 import { parseWithZod } from "@conform-to/zod";
+import { getSession } from "~/services/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
+
 	await authenticateRoute({
 		request,
 	} as ActionFunctionArgs);
@@ -29,12 +32,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const { notificationId, answer, action, projectId } = submission.value;
 
 	if (action === "remove") {
-		return await removeNotification(notificationId as string);
+		return await removeNotification(notificationId as string, session);
 	} else {
 		return await answerProjectInvitation(
 			notificationId as string,
 			projectId as string,
-			answer === "true"
+			answer === "true",
+			session
 		);
 	}
 };

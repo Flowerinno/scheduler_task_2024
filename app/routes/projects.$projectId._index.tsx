@@ -42,8 +42,11 @@ import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { cn } from "~/lib/utils";
 import { CreateTagPopup } from "~/components/CreateTagPopup";
 import { Badge } from "~/components/ui/badge";
-import { getServerQueryParams } from "~/utils/route/getQueryParams";
+import { getServerQueryParams } from "~/utils/route/getQueryParams.server";
 import { DebouncedInput } from "~/components/DebouncedInput";
+import { getSession } from "~/services/session.server";
+import { redirectWithSession } from "~/utils/message/message.server";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -52,26 +55,21 @@ const ROLE_COLOR_MAPPER = {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	try {
-		const formData = await request.formData();
+	const session = await getSession(request.headers.get("cookie"));
 
-		const projectId = formData.get("projectId");
-		invariant(projectId, "Project ID is required");
+	const formData = await request.formData();
 
-		const userId = formData.get("userId");
-		invariant(userId, "User ID is required");
+	const projectId = formData.get("projectId");
+	invariant(projectId, "Project ID is required");
 
-		await authenticateAdmin(userId as string, projectId as string);
+	const userId = formData.get("userId");
+	invariant(userId, "User ID is required");
 
-		const res = await removeProject(projectId as string, userId as string);
-		invariant(res, "Project not found");
+	await authenticateAdmin(userId as string, projectId as string);
 
-		return redirect(ROUTES.projects);
-	} catch (error) {
-		return {
-			message: ERROR_MESSAGES.generalError,
-		};
-	}
+	await removeProject(projectId as string, userId as string, session);
+
+	return await redirectWithSession(ROUTES.projects, session);
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {

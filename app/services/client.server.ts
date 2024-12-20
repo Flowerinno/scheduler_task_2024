@@ -1,12 +1,21 @@
+import { data, Session } from "@remix-run/node";
 import { ERROR_MESSAGES } from "~/constants/errors";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 import prisma from "~/lib/prisma";
 import { ROLE } from "~/types";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+	setSuccessMessage,
+	setToastMessageCookie,
+} from "~/utils/message/message.server";
 
 export const getClientInfoForMonth = async (
 	clientId: string,
 	projectId: string,
 	take: number = 31,
-	date: Date
+	date: Date,
+	session: Session
 ) => {
 	const gte = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
 	const lte = new Date(
@@ -84,11 +93,16 @@ export const getClientInfoForMonth = async (
 
 		return { clientInfo, totalDuration };
 	} catch (error) {
+		setErrorMessage(session, ERROR_MESSAGES.failedToGetClientInfo);
 		return null;
 	}
 };
 
-export const updateRole = async (clientId: string, role: ROLE) => {
+export const updateRole = async (
+	clientId: string,
+	role: ROLE,
+	session: Session
+) => {
 	try {
 		if (!role) return null;
 
@@ -103,7 +117,8 @@ export const updateRole = async (clientId: string, role: ROLE) => {
 
 		return client;
 	} catch (error) {
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.failedToUpdate);
+		return await nullableResponseWithMessage(session);
 	}
 };
 
@@ -111,7 +126,8 @@ export const inviteUserToProject = async (
 	name: string,
 	deliverToUserID: string,
 	sentById: string,
-	projectId: string
+	projectId: string,
+	session: Session
 ) => {
 	try {
 		const existingClient = await prisma.client.findFirst({
@@ -121,9 +137,12 @@ export const inviteUserToProject = async (
 			},
 		});
 
-		if (existingClient) return null;
+		if (existingClient) {
+			setErrorMessage(session, ERROR_MESSAGES.failedToInviteAlreadyExists);
+			return await nullableResponseWithMessage(session);
+		}
 
-		return await prisma.notification.create({
+		await prisma.notification.create({
 			data: {
 				message: `You have been invited to ${name} project`,
 				userId: deliverToUserID,
@@ -131,33 +150,41 @@ export const inviteUserToProject = async (
 				projectId,
 			},
 		});
+
+		setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
 	} catch (error) {
-		console.log(`Failed to invite user to project: ${error}`);
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.generalError);
 	}
 };
 
-export const removeClientFromProject = async (clientId: string) => {
+export const removeClientFromProject = async (
+	clientId: string,
+	session: Session
+) => {
 	try {
-		const client = await prisma.client.delete({
+		await prisma.client.delete({
 			where: {
 				id: clientId,
 			},
 		});
 
-		return client;
+		setSuccessMessage(session, RESPONSE_MESSAGE.clientRemoved);
+
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return null;
+		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
+		return await nullableResponseWithMessage(session);
 	}
 };
 
 export const attachTag = async (
 	clientId: string,
 	tagId: string,
-	projectId: string
+	projectId: string,
+	session: Session
 ) => {
 	try {
-		const attachedTag = await prisma.clientsOnTags.create({
+		await prisma.clientsOnTags.create({
 			data: {
 				clientId,
 				tagId,
@@ -165,19 +192,23 @@ export const attachTag = async (
 			},
 		});
 
-		return attachedTag;
+		setSuccessMessage(session, RESPONSE_MESSAGE.tagAttached);
+
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
+		return await nullableResponseWithMessage(session);
 	}
 };
 
 export const detachTag = async (
 	clientId: string,
 	tagId: string,
-	projectId: string
+	projectId: string,
+	session: Session
 ) => {
 	try {
-		const removedTags = await prisma.clientsOnTags.deleteMany({
+		await prisma.clientsOnTags.deleteMany({
 			where: {
 				clientId,
 				tagId,
@@ -185,8 +216,11 @@ export const detachTag = async (
 			},
 		});
 
-		return removedTags;
+		setSuccessMessage(session, RESPONSE_MESSAGE.tagDetached);
+
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.failedToRemove);
+		return await nullableResponseWithMessage(session);
 	}
 };

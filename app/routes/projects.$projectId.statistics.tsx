@@ -39,7 +39,7 @@ import {
 	getEndOfCurrentWeek,
 	getStartOfCurrentWeek,
 } from "~/utils/date/dateFormatter";
-import { getServerQueryParams } from "~/utils/route/getQueryParams";
+import { getServerQueryParams } from "~/utils/route/getQueryParams.server";
 
 type OrderBy =
 	| "absent-desc"

@@ -1,9 +1,16 @@
+import { Session } from "@remix-run/node";
 import invariant from "tiny-invariant";
+import { ERROR_MESSAGES } from "~/constants/errors";
 import { RESPONSE_MESSAGE } from "~/constants/messages";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
 import { FetchProjectStatistics } from "~/types";
 import { getStartOfTheDay } from "~/utils/date/dateFormatter";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+	setSuccessMessage,
+} from "~/utils/message/message.server";
 
 export const getUserProjects = async (userId: string) => {
 	try {
@@ -203,7 +210,11 @@ export const getAllActivities = async (userId: string, take: number = 31) => {
 	}
 };
 
-export const removeProject = async (projectId: string, userId: string) => {
+export const removeProject = async (
+	projectId: string,
+	userId: string,
+	session: Session
+) => {
 	try {
 		const project = await prisma.project.findFirst({
 			where: {
@@ -213,20 +224,22 @@ export const removeProject = async (projectId: string, userId: string) => {
 		});
 
 		if (!project) {
-			return null;
+			setErrorMessage(session, ERROR_MESSAGES.notFound);
 		}
 
-		return await prisma.project.delete({
+		await prisma.project.delete({
 			where: {
 				id: projectId,
 			},
 		});
+
+		setSuccessMessage(session, RESPONSE_MESSAGE.deleted);
 	} catch (error) {
-		return null;
+		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
 	}
 };
 
-export const createLog = async (data: LogsSchema) => {
+export const createLog = async (data: LogsSchema, session: Session) => {
 	//versioning to prevent race conditions, default v=1
 	try {
 		const duration = data.endTime.getTime() - data.startTime.getTime();
@@ -235,7 +248,7 @@ export const createLog = async (data: LogsSchema) => {
 
 		const onDate = getStartOfTheDay(data.startTime);
 
-		return await prisma.$transaction(async (prisma) => {
+		await prisma.$transaction(async (prisma) => {
 			const conflictingRecord = await prisma.log.findFirst({
 				where: {
 					clientId: data.clientId,
@@ -244,6 +257,10 @@ export const createLog = async (data: LogsSchema) => {
 					date: onDate,
 				},
 			}); // look for a log with the same version and date
+
+			if (conflictingRecord) {
+				setErrorMessage(session, ERROR_MESSAGES.conflictingLogAlreadyExists);
+			}
 
 			invariant(conflictingRecord === null, "Conflicting log found"); // if found, throw an error
 
@@ -256,17 +273,19 @@ export const createLog = async (data: LogsSchema) => {
 			});
 		});
 	} catch (error) {
-		return { message: "Could not create log, version mismatch" };
+		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
+	} finally {
+		return await nullableResponseWithMessage(session);
 	}
 };
 
-export const updateLog = async (data: LogsSchema) => {
+export const updateLog = async (data: LogsSchema, session: Session) => {
 	try {
 		const duration = data.endTime.getTime() - data.startTime.getTime();
 
 		const { logId, version, ...rest } = data;
 
-		return await prisma.$transaction(async (prisma) => {
+		await prisma.$transaction(async (prisma) => {
 			return prisma.log.update({
 				// wont update if not found
 				where: {
@@ -283,7 +302,9 @@ export const updateLog = async (data: LogsSchema) => {
 			});
 		});
 	} catch (error) {
-		return { message: "Could not update log, version mismatch" };
+		setErrorMessage(session, ERROR_MESSAGES.failedToUpdate);
+	} finally {
+		return await nullableResponseWithMessage(session);
 	}
 };
 
@@ -311,27 +332,39 @@ export const getTotalActivityDuration = async (
 	}
 };
 
-export const createTag = async (projectId: string, tag: string) => {
+export const createTag = async (
+	projectId: string,
+	tag: string,
+	session: Session
+) => {
 	try {
 		const existingTag = await prisma.tag.findFirst({
 			where: {
 				projectId,
-				name: tag,
+				name: {
+					equals: tag,
+					mode: "insensitive",
+				},
 			},
 		});
 
 		if (existingTag) {
-			return { message: RESPONSE_MESSAGE.tagAlreadyExists };
+			setErrorMessage(session, ERROR_MESSAGES.generalAlreadyExists);
+			return await nullableResponseWithMessage(session);
 		}
 
-		return await prisma.tag.create({
+		await prisma.tag.create({
 			data: {
 				name: tag,
 				projectId,
 			},
 		});
+
+		setSuccessMessage(session, RESPONSE_MESSAGE.tagCreated);
 	} catch (error) {
-		return { message: RESPONSE_MESSAGE.couldNotCreateTag };
+		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
+	} finally {
+		return await nullableResponseWithMessage(session);
 	}
 };
 

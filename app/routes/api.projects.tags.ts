@@ -8,8 +8,14 @@ import {
 } from "~/middleware/authenticateRoute";
 import { createTagSchema } from "~/schema/projectSchema";
 import { createTag } from "~/services/project.server";
+import { getSession } from "~/services/session.server";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+} from "~/utils/message/message.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
 	try {
 		const formData = await request.formData();
 
@@ -29,8 +35,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		const admin = await authenticateAdmin(user.id, projectId);
 		invariant(admin, "User is not an admin");
 
-		return await createTag(projectId, tag);
+		return await createTag(projectId, tag, session);
 	} catch (error) {
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.generalError);
+		return await nullableResponseWithMessage(session);
 	}
 };

@@ -1,6 +1,14 @@
 import prisma from "~/lib/prisma";
 import { Notification } from "@prisma/client";
 import { HTTP_STATUS } from "~/constants/general";
+import { Session } from "@remix-run/node";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+	setSuccessMessage,
+} from "~/utils/message/message.server";
+import { ERROR_MESSAGES } from "~/constants/errors";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 
 export const getUsersByEmail = async (email: string) => {
 	try {
@@ -41,7 +49,8 @@ export const getUserNotifications = async (
 export const answerProjectInvitation = async (
 	notificationId: string,
 	projectId: string,
-	answer: boolean
+	answer: boolean,
+	session: Session
 ) => {
 	try {
 		const answerFromUser = await prisma.notification.update({
@@ -86,7 +95,8 @@ export const answerProjectInvitation = async (
 			});
 
 			if (isClientOnProject) {
-				return { status: HTTP_STATUS.OK };
+				setErrorMessage(session, ERROR_MESSAGES.failedToAccept);
+				return await nullableResponseWithMessage(session);
 			}
 
 			await prisma.client.create({
@@ -101,17 +111,23 @@ export const answerProjectInvitation = async (
 			});
 		}
 
-		return { status: HTTP_STATUS.OK };
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return null;
+		setErrorMessage(session, ERROR_MESSAGES.failedToAccept);
+		return await nullableResponseWithMessage(session);
 	}
 };
 
-export const removeNotification = async (notificationId: string) => {
+export const removeNotification = async (
+	notificationId: string,
+	session: Session
+) => {
 	try {
 		await prisma.notification.delete({ where: { id: notificationId } });
-		return { status: HTTP_STATUS.OK };
+		setSuccessMessage(session, RESPONSE_MESSAGE.notificationRemoved);
 	} catch (error) {
-		return null;
+		setErrorMessage(session, ERROR_MESSAGES.failedToRemove);
+	} finally {
+		return await nullableResponseWithMessage(session);
 	}
 };

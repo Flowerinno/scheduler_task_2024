@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { data, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import {
 	Link,
 	useFetcher,
@@ -41,12 +41,16 @@ import {
 	calculateMonthLogs,
 } from "~/utils/date/dateFormatter";
 import MultipleSelector, { Option } from "~/components/ui/multiple-selector";
+import { getSession } from "~/services/session.server";
+import { setToastMessageCookie } from "~/utils/message/message.server";
 
 type ExtendedOption = Option & { id: string };
 
 const voidSelection = (date: Date) => {};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
+
 	const memberId = params.memberId;
 	invariant(memberId, "Member ID is required");
 
@@ -63,16 +67,27 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const date = queryDate ? new Date(queryDate) : new Date();
 
-	const data = await getClientInfoForMonth(memberId, projectId, 31, date);
-	invariant(data?.clientInfo, "Client not found");
-	invariant(data?.totalDuration, "Client not found");
+	const clientInfo = await getClientInfoForMonth(
+		memberId,
+		projectId,
+		31,
+		date,
+		session
+	);
+	invariant(clientInfo?.clientInfo, "Client not found");
+	invariant(clientInfo?.totalDuration, "Client not found");
 
-	return {
-		clientInfo: data.clientInfo,
-		totalDuration: data.totalDuration?._sum.duration,
-		user,
-		activeClientRole: activeClient.role,
-	};
+	return data(
+		{
+			clientInfo: clientInfo.clientInfo,
+			totalDuration: clientInfo.totalDuration?._sum.duration,
+			user,
+			activeClientRole: activeClient.role,
+		},
+		{
+			headers: await setToastMessageCookie(session),
+		}
+	);
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

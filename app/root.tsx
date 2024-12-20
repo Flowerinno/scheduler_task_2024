@@ -7,10 +7,9 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 	useLocation,
-	useRouteError,
-	useRouteLoaderData,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { data } from "@remix-run/node";
 
 import styles from "./tailwind.css?url";
 import { authenticator } from "./services/auth.server";
@@ -25,13 +24,13 @@ import { Notification } from "@prisma/client";
 import { ContextType } from "./types";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
-import { Toaster } from "~/components/ui/toaster";
+import { Toast } from "./components/Toaster";
+import { commitSession, getSession } from "./services/session.server";
+import { ToastMessage } from "./utils/message/message.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 export function ErrorBoundary() {
-	const error = useRouteError();
-
 	return (
 		<div className="w-full p-10 flex flex-col gap-2 items-center">
 			<Label className="text-xl">Looks like something went wrong...</Label>
@@ -45,6 +44,10 @@ export function ErrorBoundary() {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
+
+	const toastMessage = session.get("toastMessage") as ToastMessage;
+
 	const user = await authenticator.isAuthenticated(request);
 
 	let notifications: Notification[] = [];
@@ -53,11 +56,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		notifications = await getUserNotifications(user.id);
 	}
 
-	return { user, notifications };
+	return data(
+		{ user, notifications, toastMessage },
+		{
+			headers: {
+				"Set-Cookie": await commitSession(session),
+			},
+		}
+	);
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-	const data = useRouteLoaderData<typeof loader>("root");
+	const data = useLoaderData<typeof loader>();
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,7 +91,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				<Toaster />
 				<main className="relative">
 					{isModalOpen && (
 						<CreateProjectModal
@@ -105,6 +114,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 						children
 					)}
 				</main>
+
 				<ScrollRestoration />
 				<Scripts />
 			</body>
@@ -116,13 +126,16 @@ export default function App() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Outlet
-			context={
-				{
-					user: data?.user,
-					notifications: data?.notifications,
-				} satisfies ContextType
-			}
-		/>
+		<>
+			<Toast />
+			<Outlet
+				context={
+					{
+						user: data?.user,
+						notifications: data?.notifications,
+					} satisfies ContextType
+				}
+			/>
+		</>
 	);
 }

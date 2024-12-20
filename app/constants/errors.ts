@@ -4,4 +4,18 @@ export const ERROR_MESSAGES = {
 	notAuthorized: "Not authorized",
 	wrongPayload: "Wrong payload",
 	generalError: "Something went wrong",
+	failedToUpdate: "Failed to update",
+	failedToCreate: "Failed to create",
+	failedToDelete: "Failed to delete",
+	failedToRemove: "Failed to remove",
+	failedToInviteAlreadyExists: "Failed to invite, user already exists",
+	failedToInvite: "Failed to invite",
+	failedToAccept: "Failed to accept",
+	failedToGetClientInfo: "Failed to get client info",
+	failedToUpdateLogVersionMismatch: "Failed to update log",
+	failedToCreateLogVersionMismatch: "Could not update log",
+	conflictingLogAlreadyExists:
+		"Failed to create activity, conflicting log already exists",
+	generalAlreadyExists: "Already exists",
+	notFound: "Not found",
 };

@@ -4,8 +4,14 @@ import { ERROR_MESSAGES } from "~/constants/errors";
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
 import { logsSchema } from "~/schema/logsSchema";
 import { createLog, updateLog } from "~/services/project.server";
+import { getSession } from "~/services/session.server";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+} from "~/utils/message/message.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
 	try {
 		const formData = await request.formData();
 
@@ -21,11 +27,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		);
 
 		if (submission.value.logId) {
-			return await updateLog(submission.value);
+			return await updateLog(submission.value, session);
 		} else {
-			return await createLog(submission.value);
+			return await createLog(submission.value, session);
 		}
 	} catch (error) {
-		return { message: ERROR_MESSAGES.generalError };
+		setErrorMessage(session, ERROR_MESSAGES.generalError);
+		return await nullableResponseWithMessage(session);
 	}
 };

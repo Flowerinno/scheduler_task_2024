@@ -1,6 +1,8 @@
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, data } from "@remix-run/node";
 import invariant from "tiny-invariant";
+import { ERROR_MESSAGES } from "~/constants/errors";
 import { HTTP_STATUS } from "~/constants/general";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
 import {
 	attachTag,
@@ -9,7 +11,14 @@ import {
 	removeClientFromProject,
 	updateRole,
 } from "~/services/client.server";
+import { getSession } from "~/services/session.server";
 import { ROLE } from "~/types";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+	setSuccessMessage,
+	setToastMessageCookie,
+} from "~/utils/message/message.server";
 
 type Action =
 	| "updateRole"
@@ -19,12 +28,13 @@ type Action =
 	| "removeTag";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
+
 	try {
 		const contentType = request.headers.get("content-type");
 
-		let body;
 		if (contentType?.includes("application/json")) {
-			body = await request.json();
+			const body = await request.json();
 
 			if (body.action === "createClient") {
 				if (
@@ -37,11 +47,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 							body.name,
 							client.id,
 							body.createdById,
-							body.projectId
+							body.projectId,
+							session
 						);
 					}
 
-					return { status: HTTP_STATUS.OK };
+					return await nullableResponseWithMessage(session);
 				}
 			}
 		} else if (contentType?.includes("application/x-www-form-urlencoded")) {
@@ -64,28 +75,38 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			await authenticateAdmin(userId, projectId);
 
 			if (action === "updateRole") {
-				return await updateRole(clientId, formData.get("role") as ROLE);
+				return await updateRole(
+					clientId,
+					formData.get("role") as ROLE,
+					session
+				);
 			}
 
 			if (action === "deleteClient") {
-				return removeClientFromProject(clientId);
+				return removeClientFromProject(clientId, session);
 			}
 
 			if (action === "addTag") {
 				invariant(tagId, "Tag ID is required");
-				return await attachTag(clientId, tagId, projectId);
+				return await attachTag(clientId, tagId, projectId, session);
 			}
 
 			if (action === "removeTag") {
 				invariant(tagId, "Tag ID is required");
-				return await detachTag(clientId, tagId, projectId);
+				return await detachTag(clientId, tagId, projectId, session);
 			}
 		} else {
 			throw new Error("Unsupported content type");
 		}
 
-		return null;
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return null;
+		if (error instanceof Error) {
+			setErrorMessage(session, error.message);
+		} else {
+			setErrorMessage(session, ERROR_MESSAGES.generalError);
+		}
+
+		return await nullableResponseWithMessage(session);
 	}
 };

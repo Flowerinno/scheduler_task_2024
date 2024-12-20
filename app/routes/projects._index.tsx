@@ -1,3 +1,4 @@
+import React from "react";
 import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { ROUTES } from "~/constants/routes";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
@@ -6,7 +7,6 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { Label } from "~/components/ui/label";
 import { formatDate } from "date-fns";
 import { Separator } from "~/components/ui/separator";
-import React from "react";
 import invariant from "tiny-invariant";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

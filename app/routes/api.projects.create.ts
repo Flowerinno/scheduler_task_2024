@@ -6,8 +6,17 @@ import { createProjectSchema } from "~/schema/projectSchema";
 import prisma from "~/lib/prisma";
 import invariant from "tiny-invariant";
 import { ROLE } from "~/types";
+import {
+	nullableResponseWithMessage,
+	setErrorMessage,
+	setSuccessMessage,
+} from "~/utils/message/message.server";
+import { getSession } from "~/services/session.server";
+import { RESPONSE_MESSAGE } from "~/constants/messages";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	const session = await getSession(request.headers.get("cookie"));
+
 	try {
 		await authenticateRoute({
 			request,
@@ -27,10 +36,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		const { data, success } = createProjectSchema.safeParse(body);
 
 		if (!success) {
-			return {
-				message: ERROR_MESSAGES.wrongPayload,
-				status: HTTP_STATUS.BAD_REQUEST,
-			};
+			setErrorMessage(session, ERROR_MESSAGES.wrongPayload);
+			return await nullableResponseWithMessage(session);
 		}
 
 		const user = await prisma.user.findUnique({
@@ -79,15 +86,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						},
 					});
 				} catch (error) {
-					console.error("Failed to create notification:", error);
+					setErrorMessage(session, ERROR_MESSAGES.failedToInvite);
 				}
 			}
+			setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
 		}
 
-		return {
-			status: HTTP_STATUS.OK,
-		};
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
-		return null;
+		if (error instanceof Error) {
+			setErrorMessage(session, error.message);
+		} else {
+			setErrorMessage(session, ERROR_MESSAGES.generalError);
+		}
+		return await nullableResponseWithMessage(session);
 	}
 };
