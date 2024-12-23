@@ -253,21 +253,24 @@ export default function TeamMember() {
 					<Label className="font-bold text-2xl text-gray-400">
 						{clientInfo.project.name}
 					</Label>
+					<RoleSelector
+						role={clientInfo.role as ROLE}
+						clientId={clientInfo.id}
+						userId={user.id}
+						projectId={project.id}
+						disabled={!isAdmin}
+					/>
 					{isAdmin && (
-						<RoleSelector
-							role={clientInfo.role as ROLE}
-							clientId={clientInfo.id}
-							userId={user.id}
-							projectId={project.id}
-						/>
+						<>
+							<Button
+								className="text-red-500 h-6 text-xs"
+								variant={"outline"}
+								onClick={() => setIsAlertOpen(true)}
+							>
+								Remove from project
+							</Button>
+						</>
 					)}
-					<Button
-						className="text-red-500 h-6 text-xs"
-						variant={"outline"}
-						onClick={() => setIsAlertOpen(true)}
-					>
-						Remove from project
-					</Button>
 				</div>
 				<MultipleSelector
 					value={
@@ -330,11 +333,13 @@ const RoleSelector = ({
 	clientId,
 	userId,
 	projectId,
+	disabled,
 }: {
 	role: ROLE;
 	clientId: string;
 	userId: string;
 	projectId: string;
+	disabled: boolean;
 }) => {
 	const fetcher = useFetcher();
 
@@ -358,6 +363,7 @@ const RoleSelector = ({
 			<Select
 				name="role"
 				value={role}
+				disabled={disabled}
 				onValueChange={(r) => onSelect(r as ROLE)}
 			>
 				<SelectTrigger className="w-[120px] h-[25px]">
