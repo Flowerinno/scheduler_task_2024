@@ -8,6 +8,7 @@ import {
 	setErrorMessage,
 	setSuccessMessage,
 } from "~/utils/message/message.server";
+import { createUserNotification } from "./user.server";
 
 export const getClientInfoForMonth = async (
 	clientId: string,
@@ -141,14 +142,12 @@ export const inviteUserToProject = async (
 			return await nullableResponseWithMessage(session);
 		}
 
-		await prisma.notification.create({
-			data: {
-				message: `You have been invited to ${name} project`,
-				userId: deliverToUserID,
-				sentById,
-				projectId,
-			},
-		});
+		await createUserNotification(
+			`You have been invited to ${name} project`,
+			deliverToUserID,
+			sentById,
+			projectId
+		);
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
 	} catch (error) {
@@ -168,9 +167,9 @@ export const removeClientFromProject = async (
 		});
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.clientRemoved);
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
-	} finally {
 		return await nullableResponseWithMessage(session);
 	}
 };
@@ -191,7 +190,6 @@ export const attachTag = async (
 		});
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.tagAttached);
-
 		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
@@ -215,7 +213,6 @@ export const detachTag = async (
 		});
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.tagDetached);
-
 		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToRemove);

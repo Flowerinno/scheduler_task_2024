@@ -8,6 +8,7 @@ import {
 	getAllActivities,
 	getProjectActivitiesById,
 } from "~/services/project.server";
+import { getServerQueryParams } from "~/utils/route/getQueryParams.server";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -21,10 +22,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	invariant(user, "User session is missing");
 
-	const searchParams = new URL(request.url).searchParams;
-
-	const projectId = searchParams.get("projectId");
-	const take = searchParams.get("take");
+	const { projectId, take } = getServerQueryParams(
+		["projectId", "take"],
+		new URL(request.url)
+	);
 
 	let logs = [];
 

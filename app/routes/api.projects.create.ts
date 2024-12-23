@@ -2,9 +2,7 @@ import { ActionFunctionArgs } from "@remix-run/node";
 import { ERROR_MESSAGES } from "~/constants/errors";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import { createProjectSchema } from "~/schema/projectSchema";
-import prisma from "~/lib/prisma";
 import invariant from "tiny-invariant";
-import { ROLE } from "~/types";
 import {
 	nullableResponseWithMessage,
 	setErrorMessage,
@@ -12,6 +10,8 @@ import {
 } from "~/utils/message/message.server";
 import { getSession } from "~/services/session.server";
 import { RESPONSE_MESSAGE } from "~/constants/messages";
+import { createUserNotification, getUserById } from "~/services/user.server";
+import { createProject } from "~/services/project.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const session = await getSession(request.headers.get("cookie"));
@@ -39,51 +39,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			return await nullableResponseWithMessage(session);
 		}
 
-		const user = await prisma.user.findUnique({
-			where: {
-				id: data.createdById,
-			},
-			omit: {
-				password: true,
-			},
-		});
+		const user = await getUserById(data.createdById);
 		invariant(user, "User not found");
 
-		const project = await prisma.project.create({
-			data: {
-				name: data.name,
-				description: data.description,
-				createdById: data.createdById,
-				clients: {
-					create: {
-						email: user.email,
-						userId: user.id,
-						firstName: user.firstName,
-						lastName: user.lastName,
-						role: ROLE.ADMIN,
-					},
-				},
-			},
-		});
+		const project = await createProject(data, user, session);
 		invariant(project, "Project not created");
 
-		const invitedClients = data?.clients || [];
+		const invitedUsers = data?.clients || [];
 
 		if (
-			invitedClients &&
-			Array.isArray(invitedClients) &&
-			invitedClients?.length >= 1
+			invitedUsers &&
+			Array.isArray(invitedUsers) &&
+			invitedUsers?.length >= 1
 		) {
-			for (const client of invitedClients) {
+			for (const user of invitedUsers) {
 				try {
-					await prisma?.notification.create({
-						data: {
-							message: `You have been invited to ${data.name} project`,
-							userId: client.id,
-							sentById: data.createdById,
-							projectId: project.id,
-						},
-					});
+					await createUserNotification(
+						`You have been invited to ${data.name} project`,
+						user.id,
+						data.createdById,
+						project.id
+					);
 				} catch (error) {
 					setErrorMessage(session, ERROR_MESSAGES.failedToInvite);
 				}

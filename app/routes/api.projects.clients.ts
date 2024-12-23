@@ -1,8 +1,10 @@
+import { parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 import { ERROR_MESSAGES } from "~/constants/errors";
 
 import { authenticateAdmin } from "~/middleware/authenticateRoute";
+import { clientApiSchema } from "~/schema/projectSchema";
 import {
 	attachTag,
 	detachTag,
@@ -16,13 +18,6 @@ import {
 	nullableResponseWithMessage,
 	setErrorMessage,
 } from "~/utils/message/message.server";
-
-type Action =
-	| "updateRole"
-	| "deleteClient"
-	| "createClient"
-	| "addTag"
-	| "removeTag";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const session = await getSession(request.headers.get("cookie"));
@@ -55,19 +50,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		} else if (contentType?.includes("application/x-www-form-urlencoded")) {
 			const formData = await request.formData();
 
-			const action = formData.get("action") as Action;
-			invariant(action, "Action is required");
+			const submission = parseWithZod(formData, { schema: clientApiSchema });
 
-			const clientId = formData.get("clientId") as string;
-			invariant(clientId, "Client ID is required");
+			if (submission.status !== "success") {
+				setErrorMessage(session, ERROR_MESSAGES.wrongPayload);
+				return submission.reply();
+			}
 
-			const userId = formData.get("userId") as string;
-			invariant(userId, "User ID is required");
-
-			const projectId = formData.get("projectId") as string;
-			invariant(projectId, "Project ID is required");
-
-			const tagId = formData.get("tagId") as string;
+			const { action, clientId, userId, projectId, tagId } = submission.value;
 
 			await authenticateAdmin(userId, projectId);
 

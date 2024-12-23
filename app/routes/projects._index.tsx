@@ -11,7 +11,6 @@ import invariant from "tiny-invariant";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
-
 	invariant(user, "User is not authenticated");
 
 	const projects = await getUserProjects(user.id);

@@ -26,9 +26,31 @@ export const createActivitySchema = z.object({
 	clientId: z.string(),
 });
 
-export const clientApiSchema = z.object({
-	action: z.enum(["updateRole", "deleteClient", "createClient"]),
-});
+export const clientApiSchema = z
+	.object({
+		action: z.enum([
+			"updateRole",
+			"deleteClient",
+			"createClient",
+			"addTag",
+			"removeTag",
+		]),
+		clientId: z.string().min(1, "Client ID is required"),
+		userId: z.string().min(1, "User ID is required"),
+		projectId: z.string().min(1, "Project ID is required"),
+		tagId: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.action === "removeTag" || data.action === "addTag") {
+			if (!data.tagId) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "Tag ID is required",
+					path: ["tagId"],
+				});
+			}
+		}
+	});
 
 export const createTagSchema = z.object({
 	tag: z.string().min(1, "Tag name must be at least 1 character"),

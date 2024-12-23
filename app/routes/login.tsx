@@ -76,7 +76,7 @@ export default function Login() {
 			<br />
 			{form.errors && <Label className="text-red-500">{form.errors[0]}</Label>}
 			<Form
-				method="post"
+				method="POST"
 				className="w-full border-black flex flex-col items-center justify-center gap-4 [&>div]:w-7/12"
 			>
 				<TextInput

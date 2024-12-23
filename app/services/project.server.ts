@@ -4,13 +4,47 @@ import { ERROR_MESSAGES } from "~/constants/errors";
 import { RESPONSE_MESSAGE } from "~/constants/messages";
 import prisma from "~/lib/prisma";
 import { LogsSchema } from "~/schema/logsSchema";
-import { FetchProjectStatistics } from "~/types";
+import { CreateProjectSchema } from "~/schema/projectSchema";
+import { FetchProjectStatistics, ROLE } from "~/types";
 import { getStartOfTheDay } from "~/utils/date/dateFormatter";
 import {
 	nullableResponseWithMessage,
 	setErrorMessage,
 	setSuccessMessage,
 } from "~/utils/message/message.server";
+import { AuthUser } from "./auth.server";
+
+export const createProject = async (
+	projectData: CreateProjectSchema,
+	adminInfo: AuthUser,
+	session: Session
+) => {
+	try {
+		if (!adminInfo) {
+			return;
+		}
+
+		return await prisma.project.create({
+			data: {
+				name: projectData.name,
+				description: projectData.description,
+				createdById: projectData.createdById,
+				clients: {
+					create: {
+						email: adminInfo.email,
+						userId: adminInfo.id,
+						firstName: adminInfo.firstName,
+						lastName: adminInfo.lastName,
+						role: ROLE.ADMIN,
+					},
+				},
+			},
+		});
+	} catch (error) {
+		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
+		return null;
+	}
+};
 
 export const getUserProjects = async (userId: string) => {
 	try {
@@ -235,7 +269,6 @@ export const removeProject = async (
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.deleted);
 	} catch (error) {
-		console.log(error);
 		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
 	}
 };
@@ -273,9 +306,10 @@ export const createLog = async (data: LogsSchema, session: Session) => {
 				},
 			});
 		});
+
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
-	} finally {
 		return await nullableResponseWithMessage(session);
 	}
 };
@@ -302,9 +336,10 @@ export const updateLog = async (data: LogsSchema, session: Session) => {
 				},
 			});
 		});
+
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToUpdate);
-	} finally {
 		return await nullableResponseWithMessage(session);
 	}
 };
@@ -327,9 +362,9 @@ export const getTotalActivityDuration = async (
 			},
 		});
 
-		return { duration: totalDuration._sum.duration ?? 0 };
+		return totalDuration._sum.duration ?? 0;
 	} catch (error) {
-		return { duration: 0 };
+		return 0;
 	}
 };
 
@@ -362,9 +397,9 @@ export const createTag = async (
 		});
 
 		setSuccessMessage(session, RESPONSE_MESSAGE.tagCreated);
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
-	} finally {
 		return await nullableResponseWithMessage(session);
 	}
 };

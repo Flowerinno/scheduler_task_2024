@@ -84,7 +84,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		const project = await getClientProjectById(projectId, user.id, search);
 		invariant(project, "Project not found");
 
-		const { duration } = await getTotalActivityDuration(user.id, projectId);
+		const duration = await getTotalActivityDuration(user.id, projectId);
 
 		const foundClient = project.clients.find((c) => {
 			return c.userId === user.id;

@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const submission = parseWithZod(formData, { schema: inboxSchema });
 
 	if (submission.status !== "success") {
-		return null;
+		return submission.reply();
 	}
 
 	const { notificationId, answer, action, projectId } = submission.value;

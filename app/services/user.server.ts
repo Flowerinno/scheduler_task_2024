@@ -124,10 +124,46 @@ export const removeNotification = async (
 ) => {
 	try {
 		await prisma.notification.delete({ where: { id: notificationId } });
+
 		setSuccessMessage(session, RESPONSE_MESSAGE.notificationRemoved);
+		return await nullableResponseWithMessage(session);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToRemove);
-	} finally {
 		return await nullableResponseWithMessage(session);
+	}
+};
+
+export const getUserById = async (userId: string) => {
+	try {
+		return await prisma.user.findUnique({
+			where: {
+				id: userId,
+			},
+			omit: {
+				password: true,
+			},
+		});
+	} catch (error) {
+		return null;
+	}
+};
+
+export const createUserNotification = async (
+	message: string,
+	userId: string,
+	sentById: string,
+	projectId: string
+) => {
+	try {
+		await prisma.notification.create({
+			data: {
+				message,
+				userId,
+				sentById,
+				projectId,
+			},
+		});
+	} catch (error) {
+		return null;
 	}
 };
