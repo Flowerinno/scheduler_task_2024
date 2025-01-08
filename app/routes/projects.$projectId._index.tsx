@@ -32,7 +32,6 @@ import { AddClientsPopup } from "~/components/AddClientsPopup";
 import { useState } from "react";
 import { ROLE } from "~/types";
 import { Alert } from "~/components/Alert";
-import { ERROR_MESSAGES } from "~/constants/errors";
 import {
 	calculateDuration,
 	calculateMonthLogs,
@@ -340,7 +339,7 @@ export default function Project() {
 					/>
 				</div>
 				<Separator />
-				<div className="flex gap-2 flex-col">
+				<div className="flex flex-col gap-1">
 					{project.clients
 						.filter((c) => {
 							const isMatch =

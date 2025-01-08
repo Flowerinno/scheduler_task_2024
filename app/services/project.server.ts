@@ -142,6 +142,7 @@ export const getClientProjectById = async (
 							},
 						},
 					},
+					take: 10,
 				},
 				createdBy: {
 					select: {
