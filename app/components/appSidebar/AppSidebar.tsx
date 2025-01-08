@@ -21,8 +21,9 @@ import {
 	MenuIcon,
 	LogOutIcon,
 } from "lucide-react";
-import { Link } from "@remix-run/react";
+import { Link, useLocation } from "@remix-run/react";
 import { AuthUser } from "~/services/auth.server";
+import { cn } from "~/lib/utils";
 
 const items = [
 	{
@@ -62,6 +63,8 @@ export function AppSidebar({
 }: AppSidebarProps) {
 	const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
 
+	const path = useLocation().pathname;
+
 	if (isMobile && !openMobile) {
 		return (
 			<MenuIcon
@@ -92,7 +95,9 @@ export function AppSidebar({
 					<SidebarGroupContent />
 					<SidebarGroupContent>
 						<SidebarMenu>
-							<SidebarMenuItem>
+							<SidebarMenuItem
+								className={cn([path === ROUTES.inbox && "bg-gray-200"])}
+							>
 								<SidebarMenuButton asChild>
 									<Link to={ROUTES.inbox} className="relative">
 										<Inbox />
@@ -110,7 +115,10 @@ export function AppSidebar({
 								</SidebarMenuButton>
 							</SidebarMenuItem>
 							{items.map((item) => (
-								<SidebarMenuItem key={item.title}>
+								<SidebarMenuItem
+									key={item.title}
+									className={cn([path === item.url && "bg-gray-200"])}
+								>
 									<SidebarMenuButton asChild>
 										<Link to={item.url}>
 											<item.icon />
