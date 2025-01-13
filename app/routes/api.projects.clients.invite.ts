@@ -12,14 +12,6 @@ import {
 	setErrorMessage,
 } from "~/utils/message/message.server";
 
-export const ClientActions = {
-	UPDATE_ROLE: "updateRole",
-	DELETE_CLIENT: "deleteClient",
-	ADD_TAG: "addTag",
-	REMOVE_TAG: "removeTag",
-	CREATE_CLIENT: "createClient",
-} as const;
-
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const session = await getSession(request.headers.get("cookie"));
 
