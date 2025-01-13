@@ -10,7 +10,7 @@ export const loader = async ({}: LoaderFunctionArgs) => {
 export const meta: MetaFunction = () => {
 	return [
 		{ title: "Scheduler" },
-		{ name: "description", content: "Keep and be in TRACK" },
+		{ name: "description", content: "Keep and be on TRACK" },
 	];
 };
 

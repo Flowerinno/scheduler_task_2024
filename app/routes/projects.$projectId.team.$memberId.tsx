@@ -43,6 +43,7 @@ import {
 import MultipleSelector, { Option } from "~/components/ui/multiple-selector";
 import { getSession } from "~/services/session.server";
 import { setToastMessageCookie } from "~/utils/message/message.server";
+import { ERROR_MESSAGES } from "~/constants/errors";
 
 type ExtendedOption = Option & { id: string };
 
@@ -52,13 +53,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const session = await getSession(request.headers.get("cookie"));
 
 	const memberId = params.memberId;
-	invariant(memberId, "Member ID is required");
+	invariant(memberId, ERROR_MESSAGES.memberIdRequired);
 
 	const projectId = params.projectId;
-	invariant(projectId, "Project ID is required");
+	invariant(projectId, ERROR_MESSAGES.projectIdRequired);
 
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
-	invariant(user, "User session is missing");
+	invariant(user, ERROR_MESSAGES.cannotAuthenticate);
 
 	const activeClient = await authenticateAdminOrManager(user.id, projectId);
 
@@ -74,8 +75,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		date,
 		session
 	);
-	invariant(clientInfo?.clientInfo, "Client not found");
-	invariant(clientInfo?.totalDuration, "Client not found");
+	invariant(clientInfo?.clientInfo, ERROR_MESSAGES.clientNotFound);
+	invariant(clientInfo?.totalDuration, ERROR_MESSAGES.clientNotFound);
 
 	return data(
 		{

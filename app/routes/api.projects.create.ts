@@ -21,51 +21,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			request,
 		} as ActionFunctionArgs);
 
-		const contentType = request.headers.get("content-type");
+		const body = await request.json();
 
-		let body;
-		if (contentType?.includes("application/json")) {
-			body = await request.json();
-		} else if (contentType?.includes("application/x-www-form-urlencoded")) {
-			body = Object.fromEntries(await request.formData());
-		} else {
-			throw new Error("Unsupported content type");
-		}
-
-		const { data, success } = createProjectSchema.safeParse(body);
-
-		if (!success) {
-			setErrorMessage(session, ERROR_MESSAGES.wrongPayload);
-			return await nullableResponseWithMessage(session);
-		}
+		const data = createProjectSchema.parse(body);
 
 		const user = await getUserById(data.createdById);
-		invariant(user, "User not found");
+		invariant(user, ERROR_MESSAGES.userNotFound);
 
 		const project = await createProject(data, user, session);
-		invariant(project, "Project not created");
+		invariant(project, ERROR_MESSAGES.failedToCreate);
 
 		const invitedUsers = data?.clients || [];
 
-		if (
-			invitedUsers &&
-			Array.isArray(invitedUsers) &&
-			invitedUsers?.length >= 1
-		) {
-			for (const user of invitedUsers) {
-				try {
-					await createUserNotification(
-						`You have been invited to ${data.name} project`,
-						user.id,
-						data.createdById,
-						project.id
-					);
-				} catch (error) {
-					setErrorMessage(session, ERROR_MESSAGES.failedToInvite);
-				}
-			}
-			setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
+		for (const user of invitedUsers) {
+			await createUserNotification(
+				`You have been invited to ${data.name} project`,
+				user.id,
+				data.createdById,
+				project.id,
+				session
+			);
 		}
+
+		setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
 
 		return await nullableResponseWithMessage(session);
 	} catch (error) {

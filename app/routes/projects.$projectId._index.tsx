@@ -45,6 +45,7 @@ import { getServerQueryParams } from "~/utils/route/getQueryParams.server";
 import { DebouncedInput } from "~/components/DebouncedInput";
 import { getSession } from "~/services/session.server";
 import { redirectWithSession } from "~/utils/message/message.server";
+import { ERROR_MESSAGES } from "~/constants/errors";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -58,10 +59,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const formData = await request.formData();
 
 	const projectId = formData.get("projectId");
-	invariant(projectId, "Project ID is required");
+	invariant(projectId, ERROR_MESSAGES.projectIdRequired);
 
 	const userId = formData.get("userId");
-	invariant(userId, "User ID is required");
+	invariant(userId, ERROR_MESSAGES.userIdRequired);
 
 	await authenticateAdmin(userId as string, projectId as string);
 
@@ -73,15 +74,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
 		const user = await authenticateRoute({ request } as LoaderFunctionArgs);
-		invariant(user, "User session is missing");
+		invariant(user, ERROR_MESSAGES.cannotAuthenticate);
 
 		const projectId = params.projectId;
-		invariant(projectId, "Project ID is required");
+		invariant(projectId, ERROR_MESSAGES.projectIdRequired);
 
 		const { search } = getServerQueryParams(["search"], new URL(request.url));
 
 		const project = await getClientProjectById(projectId, user.id, search);
-		invariant(project, "Project not found");
+		invariant(project, ERROR_MESSAGES.projectNotFound);
 
 		const duration = await getTotalActivityDuration(user.id, projectId);
 

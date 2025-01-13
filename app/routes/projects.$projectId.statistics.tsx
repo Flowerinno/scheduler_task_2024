@@ -40,6 +40,7 @@ import {
 	getStartOfCurrentWeek,
 } from "~/utils/date/dateFormatter";
 import { getServerQueryParams } from "~/utils/route/getQueryParams.server";
+import { ERROR_MESSAGES } from "~/constants/errors";
 
 type OrderBy =
 	| "absent-desc"
@@ -58,10 +59,10 @@ const MAX_SELECTABLE_COUNT = 14; //max selectable days in date range picker
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	try {
 		const user = await authenticateRoute({ request } as LoaderFunctionArgs);
-		invariant(user, "User not found");
+		invariant(user, ERROR_MESSAGES.userNotFound);
 
 		const projectId = params.projectId;
-		invariant(projectId, "Project ID not found");
+		invariant(projectId, ERROR_MESSAGES.projectIdRequired);
 
 		await authenticateAdminOrManager(user.id, projectId);
 

@@ -15,6 +15,7 @@ import { useCallback, useState } from "react";
 import { User } from "@prisma/client";
 import { BadgeItem } from "./BadgeItem";
 import { AuthUser } from "~/services/auth.server";
+import { API, CONTENT_TYPE } from "~/constants/general";
 
 type AddClientsPopupProps = {
 	isModalOpen: boolean;
@@ -49,6 +50,11 @@ export function AddClientsPopup({
 		if (addedUsers.some((user) => user.id === item.id)) {
 			return;
 		}
+
+		if (userData?.email === item.email) {
+			return;
+		}
+
 		setAddedUsers((prev) => [...prev, { id: item.id, email: item.email }]);
 	};
 
@@ -65,8 +71,8 @@ export function AddClientsPopup({
 
 		submit(JSON.stringify(object), {
 			method: "POST",
-			action: "/api/projects/clients",
-			encType: "application/json",
+			action: API.projectsClientsInvite,
+			encType: CONTENT_TYPE.JSON,
 			navigate: false,
 		});
 

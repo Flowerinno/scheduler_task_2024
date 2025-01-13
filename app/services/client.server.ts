@@ -139,7 +139,7 @@ export const inviteUserToProject = async (
 
 		if (existingClient) {
 			setErrorMessage(session, ERROR_MESSAGES.failedToInviteAlreadyExists);
-			return await nullableResponseWithMessage(session);
+			return;
 		}
 
 		await createUserNotification(
@@ -148,8 +148,6 @@ export const inviteUserToProject = async (
 			sentById,
 			projectId
 		);
-
-		setSuccessMessage(session, RESPONSE_MESSAGE.invitationSent);
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.generalError);
 	}

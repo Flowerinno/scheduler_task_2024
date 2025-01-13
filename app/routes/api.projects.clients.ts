@@ -8,7 +8,6 @@ import { clientApiSchema } from "~/schema/projectSchema";
 import {
 	attachTag,
 	detachTag,
-	inviteUserToProject,
 	removeClientFromProject,
 	updateRole,
 } from "~/services/client.server";
@@ -19,71 +18,47 @@ import {
 	setErrorMessage,
 } from "~/utils/message/message.server";
 
+export const ClientActions = {
+	UPDATE_ROLE: "updateRole",
+	DELETE_CLIENT: "deleteClient",
+	ADD_TAG: "addTag",
+	REMOVE_TAG: "removeTag",
+	CREATE_CLIENT: "createClient",
+} as const;
+
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const session = await getSession(request.headers.get("cookie"));
 
 	try {
-		const contentType = request.headers.get("content-type");
+		const formData = await request.formData();
 
-		if (contentType?.includes("application/json")) {
-			const body = await request.json();
+		const submission = parseWithZod(formData, { schema: clientApiSchema });
 
-			if (body.action === "createClient") {
-				if (
-					body.clients &&
-					Array.isArray(body.clients) &&
-					body.clients?.length >= 1
-				) {
-					for (const client of body.clients) {
-						await inviteUserToProject(
-							body.name,
-							client.id,
-							body.createdById,
-							body.projectId,
-							session
-						);
-					}
+		if (submission.status !== "success") {
+			setErrorMessage(session, ERROR_MESSAGES.wrongPayload);
+			return submission.reply();
+		}
 
-					return await nullableResponseWithMessage(session);
-				}
-			}
-		} else if (contentType?.includes("application/x-www-form-urlencoded")) {
-			const formData = await request.formData();
+		const { action, clientId, userId, projectId, tagId } = submission.value;
 
-			const submission = parseWithZod(formData, { schema: clientApiSchema });
+		await authenticateAdmin(userId, projectId);
 
-			if (submission.status !== "success") {
-				setErrorMessage(session, ERROR_MESSAGES.wrongPayload);
-				return submission.reply();
-			}
+		if (action === ClientActions.UPDATE_ROLE) {
+			return await updateRole(clientId, formData.get("role") as ROLE, session);
+		}
 
-			const { action, clientId, userId, projectId, tagId } = submission.value;
+		if (action === ClientActions.DELETE_CLIENT) {
+			return removeClientFromProject(clientId, session);
+		}
 
-			await authenticateAdmin(userId, projectId);
+		if (action === ClientActions.ADD_TAG) {
+			invariant(tagId, ERROR_MESSAGES.tagIdRequired);
+			return await attachTag(clientId, tagId, projectId, session);
+		}
 
-			if (action === "updateRole") {
-				return await updateRole(
-					clientId,
-					formData.get("role") as ROLE,
-					session
-				);
-			}
-
-			if (action === "deleteClient") {
-				return removeClientFromProject(clientId, session);
-			}
-
-			if (action === "addTag") {
-				invariant(tagId, "Tag ID is required");
-				return await attachTag(clientId, tagId, projectId, session);
-			}
-
-			if (action === "removeTag") {
-				invariant(tagId, "Tag ID is required");
-				return await detachTag(clientId, tagId, projectId, session);
-			}
-		} else {
-			throw new Error("Unsupported content type");
+		if (action === ClientActions.REMOVE_TAG) {
+			invariant(tagId, ERROR_MESSAGES.tagIdRequired);
+			return await detachTag(clientId, tagId, projectId, session);
 		}
 
 		return await nullableResponseWithMessage(session);

@@ -18,6 +18,7 @@ import React, { useCallback, useState } from "react";
 import { User } from "@prisma/client";
 import { BadgeItem } from "../BadgeItem";
 import { AuthUser } from "~/services/auth.server";
+import { API, CONTENT_TYPE } from "~/constants/general";
 
 type CreateProjectModalProps = {
 	isModalOpen: boolean;
@@ -60,6 +61,11 @@ export function CreateProjectModal({
 		if (addedUsers.some((user) => user.id === item.id)) {
 			return;
 		}
+
+		if (userData?.email === item.email) {
+			return;
+		}
+
 		setAddedUsers((prev) => [...prev, { id: item.id, email: item.email }]);
 	};
 
@@ -76,8 +82,8 @@ export function CreateProjectModal({
 
 			submit(JSON.stringify(object), {
 				method: "POST",
-				action: "/api/projects/create",
-				encType: "application/json",
+				action: API.projectsCreate,
+				encType: CONTENT_TYPE.JSON,
 				navigate: false,
 			});
 

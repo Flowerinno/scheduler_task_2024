@@ -297,7 +297,7 @@ export const createLog = async (data: LogsSchema, session: Session) => {
 				setErrorMessage(session, ERROR_MESSAGES.conflictingLogAlreadyExists);
 			}
 
-			invariant(conflictingRecord === null, "Conflicting log found"); // if found, throw an error
+			invariant(conflictingRecord === null, ERROR_MESSAGES.conflictingLogAlreadyExists); // if found, throw an error
 
 			return prisma.log.create({
 				data: {

@@ -8,10 +8,11 @@ import { Label } from "~/components/ui/label";
 import { formatDate } from "date-fns";
 import { Separator } from "~/components/ui/separator";
 import invariant from "tiny-invariant";
+import { ERROR_MESSAGES } from "~/constants/errors";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
-	invariant(user, "User is not authenticated");
+	invariant(user, ERROR_MESSAGES.cannotAuthenticate);
 
 	const projects = await getUserProjects(user.id);
 

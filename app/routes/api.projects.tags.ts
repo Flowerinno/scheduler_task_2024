@@ -30,10 +30,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		const { projectId, tag } = submission.value;
 
 		const user = await authenticateRoute({ request } as ActionFunctionArgs);
-		invariant(user, "User session is missing");
+		invariant(user, ERROR_MESSAGES.userSessionMissing);
 
 		const admin = await authenticateAdmin(user.id, projectId);
-		invariant(admin, "User is not an admin");
+		invariant(admin, ERROR_MESSAGES.notAdmin);
 
 		return await createTag(projectId, tag, session);
 	} catch (error) {

@@ -3,6 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { Label } from "~/components/ui/label";
 import { UserActivityList } from "~/components/UserActivityList";
+import { ERROR_MESSAGES } from "~/constants/errors";
 import { authenticateRoute } from "~/middleware/authenticateRoute";
 import {
 	getAllActivities,
@@ -20,7 +21,7 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await authenticateRoute({ request } as LoaderFunctionArgs);
 
-	invariant(user, "User session is missing");
+	invariant(user, ERROR_MESSAGES.userSessionMissing);
 
 	const { projectId, take } = getServerQueryParams(
 		["projectId", "take"],

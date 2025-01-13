@@ -1,6 +1,6 @@
 import { data, redirect, Session } from "@remix-run/node";
 import { ToastProps } from "~/components/ui/toast";
-import { commitSession, getSession } from "~/services/session.server";
+import { commitSession } from "~/services/session.server";
 
 export type ToastMessage = {
 	message: string;
