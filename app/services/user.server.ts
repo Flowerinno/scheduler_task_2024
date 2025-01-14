@@ -153,7 +153,7 @@ export const createUserNotification = async (
 	userId: string,
 	sentById: string,
 	projectId: string,
-	session: Session
+	session?: Session
 ) => {
 	try {
 		await prisma.notification.create({
@@ -165,7 +165,7 @@ export const createUserNotification = async (
 			},
 		});
 	} catch (error) {
-		setErrorMessage(session, ERROR_MESSAGES.failedToInvite);
+		session && setErrorMessage(session, ERROR_MESSAGES.failedToInvite);
 		return null;
 	}
 };

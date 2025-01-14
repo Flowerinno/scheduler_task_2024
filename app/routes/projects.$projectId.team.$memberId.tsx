@@ -152,7 +152,7 @@ export default function TeamMember() {
 		),
 	};
 
-	let foundLog = date
+	const foundLog = date
 		? logs?.find(
 				(log) =>
 					new Date(log.startTime).toDateString() ===

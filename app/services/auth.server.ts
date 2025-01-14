@@ -17,7 +17,7 @@ type Action = "login" | "register";
 
 export type AuthUser = Omit<User, "password"> | undefined | null;
 
-export let authenticator = new Authenticator<AuthUser>(sessionStorage);
+export const authenticator = new Authenticator<AuthUser>(sessionStorage);
 
 authenticator.use(
 	new FormStrategy(async ({ form }) => {

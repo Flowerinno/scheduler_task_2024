@@ -36,10 +36,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 
 	const session = await getSession(request.headers.get("cookie"));
-
 	session.set(authenticator.sessionKey, user);
 
-	let headers = new Headers({ "Set-Cookie": await commitSession(session) });
+	const headers = new Headers({ "Set-Cookie": await commitSession(session) });
 
 	return redirect(ROUTES.projects, { headers });
 };
