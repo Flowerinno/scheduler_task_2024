@@ -44,7 +44,10 @@ export async function redirectWithSession(path: string, session: Session) {
 }
 
 export async function nullableResponseWithMessage(session: Session) {
-	return data(null, {
-		headers: await setToastMessageCookie(session),
-	});
+	return data(
+		{ success: true },
+		{
+			headers: await setToastMessageCookie(session),
+		}
+	);
 }
