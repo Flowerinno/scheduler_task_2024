@@ -21,5 +21,6 @@ export const API = {
 	projectsClientsInvite: "/api/projects/clients/invite",
 	projectsLogs: "/api/projects/logs",
 	projectsTags: "/api/projects/tags",
+	projectsTagsRemove: "/api/projects/tags/remove",
 	users: "/api/users",
-} as const
+} as const;

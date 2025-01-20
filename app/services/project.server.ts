@@ -297,7 +297,10 @@ export const createLog = async (data: LogsSchema, session: Session) => {
 				setErrorMessage(session, ERROR_MESSAGES.conflictingLogAlreadyExists);
 			}
 
-			invariant(conflictingRecord === null, ERROR_MESSAGES.conflictingLogAlreadyExists); // if found, throw an error
+			invariant(
+				conflictingRecord === null,
+				ERROR_MESSAGES.conflictingLogAlreadyExists
+			); // if found, throw an error
 
 			return prisma.log.create({
 				data: {
@@ -402,6 +405,32 @@ export const createTag = async (
 	} catch (error) {
 		setErrorMessage(session, ERROR_MESSAGES.failedToCreate);
 		return await nullableResponseWithMessage(session);
+	}
+};
+
+export const removeTag = async (
+	projectId: string,
+	tagId: string,
+	session: Session
+) => {
+	try {
+		const removed = await prisma.tag.delete({
+			where: {
+				id: tagId,
+				projectId,
+			},
+		});
+
+		if (!removed) {
+			setErrorMessage(session, ERROR_MESSAGES.notFound);
+		}
+
+		setSuccessMessage(session, RESPONSE_MESSAGE.deleted);
+
+		return nullableResponseWithMessage(session);
+	} catch (error) {
+		setErrorMessage(session, ERROR_MESSAGES.failedToDelete);
+		return nullableResponseWithMessage(session);
 	}
 };
 

@@ -46,6 +46,8 @@ import { DebouncedInput } from "~/components/DebouncedInput";
 import { getSession } from "~/services/session.server";
 import { redirectWithSession } from "~/utils/message/message.server";
 import { ERROR_MESSAGES } from "~/constants/errors";
+import { ContextWrapper } from "~/components/ContextWrapper";
+import { API } from "~/constants/general";
 
 const ROLE_COLOR_MAPPER = {
 	ADMIN: "text-red-500",
@@ -161,6 +163,19 @@ export default function Project() {
 		}
 
 		setSearchParams({ search: String(v) });
+	};
+
+	const onTagDeletion = (tagId: string) => {
+		const formData = new FormData();
+
+		formData.append("projectId", project.id);
+		formData.append("tagId", tagId);
+		formData.append("clientId", client.id);
+
+		fetcher.submit(formData, {
+			method: "POST",
+			action: API.projectsTagsRemove,
+		});
 	};
 
 	return (
@@ -365,7 +380,7 @@ export default function Project() {
 								return null;
 							}
 
-							const tags = c.clientsOnTags.map((cot) => cot.tag.name);
+							const tags = c.clientsOnTags;
 
 							return (
 								<Link key={c.userId} to={to}>
@@ -374,16 +389,36 @@ export default function Project() {
 										<span className={`${ROLE_COLOR_MAPPER[c.role]}`}>
 											{c.role}
 										</span>{" "}
-										{tags.map((tag) => (
-											<Badge
-												key={tag}
-												className="max-h-[18px] mr-1 no-underline"
-												aria-disabled
-												variant={"outline"}
-											>
-												{tag}
-											</Badge>
-										))}
+										{tags.map(({ tag }) => {
+											if (client.role !== ROLE.ADMIN) {
+												return (
+													<Badge
+														className="max-h-[18px] mr-1 no-underline"
+														aria-disabled
+														variant={"outline"}
+													>
+														{tag.name}
+													</Badge>
+												);
+											}
+
+											return (
+												<ContextWrapper
+													key={tag.id}
+													children={
+														<Badge
+															className="max-h-[18px] mr-1 no-underline"
+															aria-disabled
+															variant={"outline"}
+														>
+															{tag.name}
+														</Badge>
+													}
+													onTagDeletion={onTagDeletion}
+													tagId={tag.id}
+												/>
+											);
+										})}
 									</Label>
 								</Link>
 							);

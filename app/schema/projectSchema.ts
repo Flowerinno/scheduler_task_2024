@@ -57,7 +57,14 @@ export const createTagSchema = z.object({
 	projectId: z.string(),
 });
 
+export const removeTagSchema = z.object({
+	tagId: z.string().min(1, "Tag ID is required"),
+	projectId: z.string().min(1, "Project ID is required"),
+	clientId: z.string().min(1, "Client ID is required"),
+});
+
 export type CreateProjectSchema = z.infer<typeof createProjectSchema>;
 export type CreateActivitySchema = z.infer<typeof createActivitySchema>;
 export type ClientApiSchema = z.infer<typeof clientApiSchema>;
 export type CreateTagSchema = z.infer<typeof createTagSchema>;
+export type RemoveTagSchema = z.infer<typeof removeTagSchema>;
